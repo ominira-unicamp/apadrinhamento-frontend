@@ -16,6 +16,7 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 const formSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
+  telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
   course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
   role: z.enum(["bixe", "veterane"], { required_error: "Selecione uma opção" }),
   pronouns: z.array(z.string()),
@@ -63,6 +64,27 @@ export const SignupPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   
+  // Format telephone as user types
+  const formatTelephone = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    
+    // Apply formatting (XX)9XXXX-XXXX
+    if (digits.length <= 2) {
+      return `(${digits.padEnd(2, '_')})_____-____`;
+    } else if (digits.length <= 3) {
+      return `(${digits.slice(0, 2)})${digits.slice(2)}${'_'.repeat(4 - digits.slice(2).length)}-____`;
+    } else if (digits.length <= 7) {
+      return `(${digits.slice(0, 2)})${digits.slice(2, 3)}${digits.slice(3).padEnd(4, '_')}-____`;
+    } else {
+      return `(${digits.slice(0, 2)})${digits.slice(2, 3)}${digits.slice(3, 7)}-${digits.slice(7).padEnd(4, '_')}`;
+    }
+  };
+  
+  // Get just the digits for form submission
+  const getTelephoneDigits = (formatted: string) => {
+    return formatted.replace(/\D/g, '').slice(0, 11);
+  };
 
   const onSubmit = async (data: formType) => {
     if(data.otherEthnicity) {
@@ -177,6 +199,38 @@ export const SignupPage = () => {
         {errors.name && (
           <span className="text-red-400">{errors.name.message}</span>
         )}
+        
+        <TextField
+          label="Telefone"
+          variant="outlined"
+          type="tel"
+          placeholder="(__)_____-____"
+          sx={inputStyle}
+          slotProps={{ inputLabel: { shrink: true } }}
+          value={watch('telephone') ? formatTelephone(watch('telephone') || '') : ''}
+          onChange={(e) => {
+            const cursorPosition = e.target.selectionStart || 0;
+            const oldValue = watch('telephone') || '';
+            const digits = getTelephoneDigits(e.target.value);
+            setValue("telephone", digits);
+            
+            // Restore cursor position on next tick
+            setTimeout(() => {
+              if (e.target.selectionStart !== null) {
+                // Calculate new cursor position based on digit count change
+                const oldDigits = oldValue.length;
+                const newDigits = digits.length;
+                const diff = newDigits - oldDigits;
+                const newPosition = Math.max(0, Math.min(cursorPosition + diff, e.target.value.length));
+                e.target.setSelectionRange(newPosition, newPosition);
+              }
+            }, 0);
+          }}
+        />
+        {errors.telephone && (
+          <span className="text-red-400">{errors.telephone.message}</span>
+        )}
+        
         {!submittedPic && (
           <>
             <div>
