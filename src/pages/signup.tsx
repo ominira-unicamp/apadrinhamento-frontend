@@ -6,7 +6,9 @@ import { MenuItem, Select, Slider, TextField } from "@mui/material";
 import axios, { AxiosResponse } from "axios";
 import { useEffect, useState } from "react";
 import UserService from "../services/user/UserService";
+import { authService } from "../services/auth/AuthService";
 import { jwtDecode } from "jwt-decode";
+import { ApiWithToken } from "../services/ApiConfig";
 
 import Logo from "../assets/logo.png";
 import { useAuth } from "../hooks/useAuth";
@@ -15,6 +17,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const formSchema = z.object({
+  email: z.string().regex(/^[a-zA-Z][0-9]{6}@dac.unicamp.br$/, "Use seu email institucional da UNICAMP"),
+  password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
+  confirmPassword: z.string().min(8, "Confirme sua senha"),
   name: z.string().min(1, "Nome é obrigatório"),
   telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
   course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
@@ -32,6 +37,9 @@ const formSchema = z.object({
   games: z.string().optional(),
   sports: z.string().optional(),
   picture: z.any().optional().refine((picture: any) => !picture?.length || ACCEPTED_IMAGE_TYPES.includes(picture[0]?.type), { message: "Selecione uma imagem válida" }).refine((picture: any) => !picture?.length || picture[0]?.size <= 5242880, { message: 'Imagem muito grande. Limite: 5MB' }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 export type formType = z.infer<typeof formSchema>;
@@ -64,12 +72,9 @@ export const SignupPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   
-  // Format telephone as user types
   const formatTelephone = (value: string) => {
-    // Remove all non-digits
     const digits = value.replace(/\D/g, '').slice(0, 11);
     
-    // Apply formatting (XX)9XXXX-XXXX
     if (digits.length <= 2) {
       return `(${digits.padEnd(2, '_')})_____-____`;
     } else if (digits.length <= 3) {
@@ -81,7 +86,6 @@ export const SignupPage = () => {
     }
   };
   
-  // Get just the digits for form submission
   const getTelephoneDigits = (formatted: string) => {
     return formatted.replace(/\D/g, '').slice(0, 11);
   };
@@ -108,19 +112,62 @@ export const SignupPage = () => {
       data.picture = undefined;
     }
 
+   
+    if (!state?.edit && !authCtx.token) {
+      try {
+        const { confirmPassword, otherPronouns, otherEthnicity, otherLgbt, picture, ...signupData } = data;
+        
+        const pendingToast = toast.loading("Criando sua conta...");
+        const signupResponse = await authService.signup(signupData);
+        toast.dismiss(pendingToast);
+        
+        const token = signupResponse.data.access_token;
+        const userId = jwtDecode<{id: string}>(token).id;
+        
+        authCtx.login({ email: data.email, password: data.password }).catch(console.error);
+        
 
-    await toast.promise(UserService.update(jwtDecode<{id: string}>(authCtx.token).id, data), {
-        success: {
-          render: ({data}) => {
-            if (data.status == true)
-              authCtx.status = true;
-            navigate('/dashboard');
-            return "Cadastrade com Sucesso";
+        if (picture) {
+          await toast.promise(
+            ApiWithToken(token).put(`/users/${userId}`, { picture }),
+            {
+              success: {
+                render: ({data}) => {
+                  if (data.data.status == true)
+                    authCtx.status = true;
+                  navigate('/dashboard');
+                  return "Cadastrado com Sucesso";
+                },
+              },
+              pending: "Salvando foto...",
+              error: "Erro ao salvar foto"
+            }
+          );
+        } else {
+          toast.success("Cadastrado com Sucesso");
+          navigate('/dashboard');
+        }
+      } catch (error: any) {
+        console.error("Signup error details:", error);
+        const errorMessage = error?.message || "Erro ao criar conta. Por favor, tente novamente.";
+        toast.error(errorMessage);
+        return;
+      }
+    } else {
+      const { email, password, confirmPassword, ...profileData } = data;
+      await toast.promise(UserService.update(jwtDecode<{id: string}>(authCtx.token).id, profileData as any), {
+          success: {
+            render: ({data}) => {
+              if (data.status == true)
+                authCtx.status = true;
+              navigate('/dashboard');
+              return "Atualizado com Sucesso";
+            },
           },
-        },
-        pending: "Carregando...",
-        error: "Erro desconhecido ao fazer cadastro"
-    });
+          pending: "Carregando...",
+          error: "Erro desconhecido ao fazer cadastro"
+      });
+    }
   };
 
   const role = watch("role");
@@ -188,6 +235,45 @@ export const SignupPage = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="mt-5 w-full max-w-lg bg-zinc-700 p-6 rounded-lg flex flex-col gap-10"
       >
+        <TextField
+          label="E-mail institucional"
+          variant="outlined"
+          type="email"
+          placeholder="a123456@dac.unicamp.br"
+          sx={inputStyle}
+          slotProps={{ inputLabel: { shrink: true } }}
+          {...register("email")}
+        />
+        {errors.email && (
+          <span className="text-red-400">{errors.email.message}</span>
+        )}
+
+        <TextField
+          label="Senha"
+          variant="outlined"
+          type="password"
+          placeholder="Mínimo 8 caracteres"
+          sx={inputStyle}
+          slotProps={{ inputLabel: { shrink: true } }}
+          {...register("password")}
+        />
+        {errors.password && (
+          <span className="text-red-400">{errors.password.message}</span>
+        )}
+
+        <TextField
+          label="Confirmar Senha"
+          variant="outlined"
+          type="password"
+          placeholder="Digite a senha novamente"
+          sx={inputStyle}
+          slotProps={{ inputLabel: { shrink: true } }}
+          {...register("confirmPassword")}
+        />
+        {errors.confirmPassword && (
+          <span className="text-red-400">{errors.confirmPassword.message}</span>
+        )}
+        
         <TextField
           label="Qual seu nome?"
           variant="standard"

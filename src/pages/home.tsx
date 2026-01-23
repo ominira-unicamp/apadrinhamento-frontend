@@ -8,11 +8,7 @@ export const HomePage = () => {
 
     const authCtx = useAuth();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!authCtx.status) 
-            navigate('/signup');
-    }, []);
+    
 
     return (
         <div className="w-full h-full flex flex-col items-center gap-9 p-2 pt-8 bg-zinc-800 overflow-y-scroll">
