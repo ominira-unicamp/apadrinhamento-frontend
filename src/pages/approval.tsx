@@ -78,7 +78,8 @@ export const ApprovalPage = () => {
 
     return (
         <div className="w-full h-full flex flex-col items-center gap-9 p-2 pt-8 bg-zinc-800 overflow-y-scroll">
-            <div className="flex flex-col w-full">
+            <div className="flex w-full justify-between">
+                <button className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer ml-2" onClick={() => navigate('/admin')}>← Admin</button>
                 <button className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer mr-2" onClick={() => authCtx.logout() }>Sair</button>
             </div>
             <img src={Logo} className="w-1/5 lg:w-1/6 md:w-1/4 h-fit aspect-square" />
@@ -102,6 +103,12 @@ export const ApprovalPage = () => {
                         <div className="text-xl"><b>Nome:</b> {selectedUser.name}</div>
                         <div className="text-lg"><b>Curso:</b> {selectedUser.course}</div>
                         <div className="text-lg"><b>Email:</b> {selectedUser.email}</div>
+                        <div className="text-lg">
+                            <b>Telefone:</b> {selectedUser.telephone ? selectedUser.telephone.replace(/(\d{2})(\d{1})(\d{4})(\d{4})/, '($1)$2$3-$4') : 'Não informado'}
+                        </div>
+                        <div className="text-lg">
+                            <b>Ano de Ingresso:</b> {selectedUser.yearOfEntry || 'Não informado'}
+                        </div>
                     </div>
                     <div className="w-full flex justify-evenly">
                         <button className="bg-cyan-600 rounded-lg p-3 text-white font-bold text-lg self-end cursor-pointer mr-2" onClick={selectedUser.reject}>Rejeitar</button>

@@ -187,6 +187,7 @@ export const SignupPage = () => {
 
   const [cities, setCities] = useState<citiesData[]>([]);
   const [submittedPic, setSubmittedPic] = useState<boolean>(false);
+  const [selectedState, setSelectedState] = useState<string>("");
 
 
   const handleStateChange = async (response: AxiosResponse) => {
@@ -198,14 +199,44 @@ export const SignupPage = () => {
       navigate("/dashboard");
 
     if (state?.edit) {
-      UserService.get(jwtDecode<{id: string}>(authCtx.token).id).then((response) => {
-        setValue("name", response.name);
-        setValue("course", response.course);
-        setValue("role", response.role);
+      UserService.get(jwtDecode<{id: string}>(authCtx.token).id).then(async (response) => {
+        setValue("name", response.name, { shouldValidate: false, shouldDirty: false });
+        setValue("course", response.course, { shouldValidate: false, shouldDirty: false });
+        setValue("role", response.role, { shouldValidate: false, shouldDirty: false });
+        if (response.telephone) {
+          setValue("telephone", response.telephone, { shouldValidate: false, shouldDirty: false });
+        }
+        if (response.yearOfEntry) {
+          setValue("yearOfEntry", response.yearOfEntry, { shouldValidate: false, shouldDirty: false });
+        }
         setValue("otherPronouns", response.pronouns.filter((v) => !["Ela/Dela", "Ele/Dele", "Elu/Delu"].includes(v))[0]);
         setValue("pronouns", response.pronouns.filter((v) => ["Ela/Dela", "Ele/Dele", "Elu/Delu"].includes(v)));
         setValue("otherEthnicity", response.ethnicity.filter((v) => !["Preta", "Branca", "Parda", "Amarela", "Indígena"].includes(v))[0]);
         setValue("ethnicity", response.ethnicity.filter((v) => ["Preta", "Branca", "Parda", "Amarela", "Indígena"].includes(v)));
+        
+        // Load state and cities if city is present
+        if (response.city && response.city !== 'Cidade') {
+          try {
+            // Search for the city to find which state it belongs to
+            const citySearchResponse = await axios.get(
+              `https://servicodados.ibge.gov.br/api/v1/localidades/municipios/${encodeURIComponent(response.city)}`
+            );
+            
+            if (citySearchResponse.data) {
+              const stateId = citySearchResponse.data.microrregiao.mesorregiao.UF.id.toString();
+              setSelectedState(stateId);
+              
+              // Fetch cities for this state
+              const citiesResponse = await axios.get(
+                `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${stateId}/municipios?orderBy=nome`
+              );
+              handleStateChange(citiesResponse);
+            }
+          } catch (error) {
+            console.error("Error loading city/state:", error);
+          }
+        }
+        
         setValue("city", response.city || 'Cidade');
         setValue("otherLgbt", response.lgbt.filter((v) => !["Lésbica", "Gay", "Bissexual", "Trans", "Queer", "Intersexo", "Assexual"].includes(v))[0]);
         setValue("lgbt", response.lgbt.filter((v) => ["Lésbica", "Gay", "Bissexual", "Trans", "Queer", "Intersexo", "Assexual"].includes(v)));
@@ -223,6 +254,17 @@ export const SignupPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-zinc-800 flex flex-col items-center p-5 gap-y-6 text-white">
+      {state?.edit && (
+        <div className="w-full flex justify-start">
+          <button 
+            type="button"
+            className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2" 
+            onClick={() => navigate('/dashboard')}
+          >
+            ← Voltar
+          </button>
+        </div>
+      )}
       <img src={Logo} className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square" />
       <h1 className="text-4xl text-center font-extrabold text-cyan-200">
         Bem-vinde ao Sistema de Apadrinhamento da Computação
@@ -378,8 +420,14 @@ export const SignupPage = () => {
           <Select
             variant="standard"
             sx={{ ":before": { borderBottomColor: "white" }, color: "white", ':hover': { borderBottomColor: "white" } }}
-            defaultValue=""
-            {...register("yearOfEntry", { valueAsNumber: true, setValueAs: (v) => v === "" ? undefined : parseInt(v) })}
+            value={watch("yearOfEntry") ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                return;
+              }
+              setValue("yearOfEntry", parseInt(value as string), { shouldValidate: true, shouldDirty: true });
+            }}
           >
             <MenuItem value=""><em className="text-zinc-400">Selecione o ano</em></MenuItem>
             {[2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015].map((year) => (
@@ -543,15 +591,18 @@ export const SignupPage = () => {
         <Select
           variant="standard"
           sx={{ ":before": { borderBottomColor: "white" }, color: "white", ':hover': { borderBottomColor: "white" }, }}
-          defaultValue=''
+          value={selectedState || ""}
           onChange={async (e) => {
+            const stateId = e.target.value as string;
+            setSelectedState(stateId);
             axios
               .get(
-                `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${e.target.value}/municipios?orderBy=nome`
+                `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${stateId}/municipios?orderBy=nome`
               )
               .then((response) => handleStateChange(response));
           }}
         >
+          <MenuItem value=""><em className="text-zinc-400">Selecione o estado</em></MenuItem>
           <MenuItem value="27">Alagoas</MenuItem>
           <MenuItem value="12">Acre</MenuItem>
           <MenuItem value="16">Amapá</MenuItem>
@@ -584,8 +635,10 @@ export const SignupPage = () => {
           variant="standard"
           label="Cidade"
           sx={{ ":before": { borderBottomColor: "white" }, color: "white" }}
-          defaultValue='Cidade'
-          {...register("city")}
+          value={watch("city") || "Cidade"}
+          onChange={(e) => {
+            setValue("city", e.target.value as string, { shouldValidate: true, shouldDirty: true });
+          }}
         >
             <MenuItem value="Cidade"><em className="text-zinc-400">Cidade</em></MenuItem>
           {cities.map((city) => (

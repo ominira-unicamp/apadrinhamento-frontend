@@ -28,6 +28,8 @@ export interface IUserGet {
     status:     boolean;
     role:       Role;
     course:     Course;
+    telephone?: string;
+    yearOfEntry?: number;
     pronouns:   string[];
     ethnicity:  string[];
     city?:      string;
