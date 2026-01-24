@@ -15,6 +15,7 @@ interface SignupData {
     telephone: string;
     course: "CC" | "EC";
     role: "bixe" | "veterane";
+    yearOfEntry: number;
     pronouns?: string[];
     ethnicity?: string[];
     city?: string;
