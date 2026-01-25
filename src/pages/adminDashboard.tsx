@@ -21,13 +21,19 @@ export const AdminDashboardPage = () => {
       color: "bg-green-600 hover:bg-green-700"
     },
     {
+      title: "Todos os Usuários",
+      description: "Ver todos os usuários cadastrados e gerenciar aprovações",
+      path: "/admin/users",
+      color: "bg-cyan-600 hover:bg-cyan-700"
+    },
+    {
       title: "Estatísticas",
       description: "Ver estatísticas gerais do sistema",
       path: "/admin/stats",
       color: "bg-blue-900 hover:bg-blue-700"
     },
     {
-      title: "Apadrinhamento",
+      title: "Gerenciar Apadrinhamento",
       description: "Gerenciar e criar relações de apadrinhamento",
       path: "/admin/godparenting",
       color: "bg-purple-600 hover:bg-purple-700"
@@ -55,12 +61,12 @@ export const AdminDashboardPage = () => {
         Bem-vindo(a), <span className="text-amber-600">{authCtx.name}</span>
       </p>
 
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 px-4">
+      <div className="w-full max-w-1xl grid grid-cols-1 md:grid-cols-4 gap-6 mt-7 px-3">
         {adminPages.map((page) => (
           <button
             key={page.path}
             onClick={() => navigate(page.path)}
-            className={`${page.color} text-white rounded-lg p-6 flex flex-col items-center gap-4 transition-all duration-200 transform hover:scale-105 shadow-lg`}
+            className={`${page.color} text-white rounded-lg p-6 flex flex-col items-center justify-center gap-4 transition-all duration-200 transform hover:scale-105 shadow-lg aspect-square`}
           >
             <h2 className="text-xl font-bold text-center">{page.title}</h2>
             <p className="text-sm text-center opacity-90">{page.description}</p>
