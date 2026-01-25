@@ -104,4 +104,9 @@ async function getToMatch(): Promise<string> {
     return JSON.stringify(response.data);
 }
 
-export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations };
+async function runMatching(): Promise<any> {
+    const response = await Api().post(`/matching/run`);
+    return response.data;
+}
+
+export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, runMatching, addGodparentRelations };

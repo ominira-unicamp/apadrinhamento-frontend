@@ -49,6 +49,8 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godparent.name}</p>
                                 <p><b>Email:</b> {relation.godparent.email}</p>
                                 <p><b>Veio de:</b> {relation.godparent.city}</p>
+                                {relation.godparent.telephone && <p><b>Telefone:</b> {relation.godparent.telephone}</p>}
+                                {relation.godparent.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godparent.yearOfEntry}</p>}
                             </div>
                         </div>
                         <div className='w-5/6'>
@@ -96,6 +98,8 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godchild.name}</p>
                                 <p><b>Email:</b> {relation.godchild.email}</p>
                                 <p><b>Veio de:</b> {relation.godchild.city}</p>
+                                {relation.godchild.telephone && <p><b>Telefone:</b> {relation.godchild.telephone}</p>}
+                                {relation.godchild.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godchild.yearOfEntry}</p>}
                             </div>
                         </div>
                         <div className='w-5/6'>
