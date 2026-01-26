@@ -29,7 +29,6 @@ export const AppRoutes = () => {
                 <Route element={<PrivateRoutes/>}>
                 {/* <Route element={<Outlet/>}> */}
                     <Route path="*" element={<Navigate to='/'/>}/>
-                    <Route path="/signup" element={<SignupPage/>}/>
                     <Route path="/dashboard" element={<HomePage/>}/>
                     <Route path="/admin/approval" element={<ApprovalPage/>}/>
                     <Route path="/admin/stats" element={<StatsPage/>}/>
@@ -38,8 +37,8 @@ export const AppRoutes = () => {
                 </Route>
 
                 <Route path="/" element={<LandPage />}/>
-
                 <Route path="/login" element={<LoginPage/>}/>
+                <Route path="/signup" element={<SignupPage/>}/>
             </Routes>
         </BrowserRouter>
     )

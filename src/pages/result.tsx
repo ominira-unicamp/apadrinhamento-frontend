@@ -20,11 +20,6 @@ export const ResultPage = () => {
     }
 
     useEffect(() => {
-        if (!authCtx.status) {
-            navigate('/signup');
-            return;
-        }
-
         load();
     }, []);
 
