@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import UserService from "../services/user/UserService";
 import { authService } from "../services/auth/AuthService";
 import { jwtDecode } from "jwt-decode";
-import { ApiWithToken } from "../services/ApiConfig";
 
 import Logo from "../assets/logo.png";
 import { useAuth } from "../hooks/useAuth";
@@ -130,11 +129,11 @@ export const SignupPage = () => {
 
         if (picture) {
           await toast.promise(
-            ApiWithToken(token).put(`/users/${userId}`, { picture }),
+            UserService.update(userId, { picture } as any),
             {
               success: {
                 render: ({data}) => {
-                  if (data.data.status == true)
+                  if ((data as any)?.status == true)
                     authCtx.status = true;
                   navigate('/dashboard');
                   return "Cadastrado com Sucesso";
