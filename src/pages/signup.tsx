@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import UserService from "../services/user/UserService";
 import { authService } from "../services/auth/AuthService";
 import { jwtDecode } from "jwt-decode";
-import { ApiWithToken } from "../services/ApiConfig";
 
 import Logo from "../assets/logo.png";
 import { useAuth } from "../hooks/useAuth";
@@ -24,6 +23,7 @@ const formSchema = z.object({
   telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
   course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
   role: z.enum(["bixe", "veterane"], { required_error: "Selecione uma opção" }),
+  yearOfEntry: z.number({ required_error: "Ano de ingresso é obrigatório" }).int().min(1900).max(new Date().getFullYear() + 1, "Ano inválido"),
   pronouns: z.array(z.string()),
   otherPronouns: z.string().optional(),
   ethnicity: z.array(z.string()),
@@ -129,11 +129,11 @@ export const SignupPage = () => {
 
         if (picture) {
           await toast.promise(
-            ApiWithToken(token).put(`/users/${userId}`, { picture }),
+            UserService.update(userId, { picture } as any),
             {
               success: {
                 render: ({data}) => {
-                  if (data.data.status == true)
+                  if ((data as any)?.status == true)
                     authCtx.status = true;
                   navigate('/dashboard');
                   return "Cadastrado com Sucesso";
@@ -365,9 +365,30 @@ export const SignupPage = () => {
               EC
             </button>
           </div>
-          {errors.role && 
+          {errors.course && 
             <span className="text-red-400">
-              {errors.role.message}
+              {errors.course.message}
+            </span>
+          }
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <p>Ano de Ingresso</p>
+          <Select
+            variant="standard"
+            sx={{ ":before": { borderBottomColor: "white" }, color: "white", ':hover': { borderBottomColor: "white" } }}
+            defaultValue=""
+            {...register("yearOfEntry", { valueAsNumber: true, setValueAs: (v) => v === "" ? undefined : parseInt(v) })}
+          >
+            <MenuItem value=""><em className="text-zinc-400">Selecione o ano</em></MenuItem>
+            {[2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015].map((year) => (
+              <MenuItem key={year} value={year}>{year}</MenuItem>
+            ))}
+            <MenuItem value={1996}>Dino 🦕</MenuItem>
+          </Select>
+          {errors.yearOfEntry && 
+            <span className="text-red-400">
+              {errors.yearOfEntry.message}
             </span>
           }
         </div>
