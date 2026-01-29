@@ -21,6 +21,12 @@ enum Role {
     veterane = "veterane",
 }
 
+export enum ApprovalStatus {
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
+    REJECTED = "REJECTED",
+}
+
 export interface IUserGet {
     id:         string;
     name:       string;
