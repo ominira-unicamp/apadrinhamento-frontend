@@ -26,6 +26,12 @@ export const ResultPage = () => {
     return (
         <div className="w-full h-full flex flex-col items-center gap-9 p-2 pt-8 bg-zinc-800 overflow-y-scroll">
             <div className="flex w-full justify-between">
+                <button 
+                    className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2" 
+                    onClick={() => navigate('/dashboard')}
+                >
+                    ← Voltar
+                </button>
                 <button className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer mr-2" onClick={() => authCtx.logout() }>Sair</button>
             </div>
             <img src={Logo} className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square" />
@@ -43,6 +49,8 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godparent.name}</p>
                                 <p><b>Email:</b> {relation.godparent.email}</p>
                                 <p><b>Veio de:</b> {relation.godparent.city}</p>
+                                {relation.godparent.telephone && <p><b>Telefone:</b> {relation.godparent.telephone}</p>}
+                                {relation.godparent.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godparent.yearOfEntry}</p>}
                             </div>
                         </div>
                         <div className='w-5/6'>
@@ -90,6 +98,8 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godchild.name}</p>
                                 <p><b>Email:</b> {relation.godchild.email}</p>
                                 <p><b>Veio de:</b> {relation.godchild.city}</p>
+                                {relation.godchild.telephone && <p><b>Telefone:</b> {relation.godchild.telephone}</p>}
+                                {relation.godchild.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godchild.yearOfEntry}</p>}
                             </div>
                         </div>
                         <div className='w-5/6'>

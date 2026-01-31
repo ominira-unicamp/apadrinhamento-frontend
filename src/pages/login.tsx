@@ -36,7 +36,12 @@ export const LoginPage = () => {
         try {
             await authCtx.login(data);
             toast.dismiss(pendingToast);
-            navigate("/dashboard");
+            
+            if (authCtx.role === "ADMIN") {
+                navigate("/admin");
+            } else {
+                navigate("/dashboard");
+            }
         } catch (e) {
             toast.dismiss(pendingToast);
             if (e instanceof UnauthorizedException) {

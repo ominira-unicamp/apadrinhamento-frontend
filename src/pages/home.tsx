@@ -8,7 +8,7 @@ export const HomePage = () => {
 
     const authCtx = useAuth();
     const navigate = useNavigate();
-    
+
 
     return (
         <div className="w-full h-full flex flex-col items-center gap-9 p-2 pt-8 bg-zinc-800 overflow-y-scroll">
@@ -20,6 +20,15 @@ export const HomePage = () => {
             <h1 className="text-4xl text-center font-extrabold text-cyan-200">Obrigado por Participar!</h1>
             <p className="mt-8 text-xl max-w-3xl text-white text-center">Fique antenade em <a href="https://www.instagram.com/ctcomp025/" target="_blank" className="text-amber-600">nosso instagram</a>, para quando sair o resultado!</p>
             <button className="mt-8 bg-amber-600 text-white text-xl font-bold py-2 px-4 rounded-lg not-disabled:cursor-pointer disabled:bg-gray-500" onClick={() => navigate('/results') }>RESULTADO</button>
+            
+            {authCtx.role === "ADMIN" && (
+                <button 
+                    className="mt-4 bg-blue-900 text-white text-xl font-bold py-2 px-4 rounded-lg cursor-pointer hover:bg-blue-950" 
+                    onClick={() => navigate('/admin')}
+                >
+                    Painel Administrativo
+                </button>
+            )}
         </div>
     )
 }

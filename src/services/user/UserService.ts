@@ -21,6 +21,12 @@ enum Role {
     veterane = "veterane",
 }
 
+export enum ApprovalStatus {
+    PENDING = "PENDING",
+    APPROVED = "APPROVED",
+    REJECTED = "REJECTED",
+}
+
 export interface IUserGet {
     id:         string;
     name:       string;
@@ -28,6 +34,11 @@ export interface IUserGet {
     status:     boolean;
     role:       Role;
     course:     Course;
+    telephone?: string;
+    yearOfEntry?: number;
+    approved?:  boolean;
+    rejected?:  boolean;
+    createdAt?: string;
     pronouns:   string[];
     ethnicity:  string[];
     city?:      string;
@@ -75,6 +86,15 @@ async function approveUser(userId: string): Promise<void> {
     await Api().put(`/users/${userId}/approve`);
 }
 
+async function unapproveUser(userId: string): Promise<void> {
+    await Api().put(`/users/${userId}/unapprove`);
+}
+
+async function getAllUsers(): Promise<IUserGet[]> {
+    const response = await Api().get(`/users/all`);
+    return response.data;
+}
+
 async function getStats(): Promise<IStatus> {
     const response = await Api().get(`/users/stats`);
     return response.data;
@@ -90,4 +110,9 @@ async function getToMatch(): Promise<string> {
     return JSON.stringify(response.data);
 }
 
-export default { update, get, getPendingApprovals, approveUser, getStats, getToMatch, addGodparentRelations };
+async function runMatching(): Promise<any> {
+    const response = await Api().post(`/matching/run`);
+    return response.data;
+}
+
+export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, runMatching, addGodparentRelations };
