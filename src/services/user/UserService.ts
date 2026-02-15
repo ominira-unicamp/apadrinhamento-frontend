@@ -110,4 +110,13 @@ async function getToMatch(): Promise<string> {
     return JSON.stringify(response.data);
 }
 
-export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations };
+async function runMatching(): Promise<any> {
+    const response = await Api().post(`/matching/run`);
+    return response.data;
+}
+
+async function updatePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    await Api().put(`/users/${userId}/password`, { currentPassword, newPassword });
+}
+
+export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations, runMatching, updatePassword };
