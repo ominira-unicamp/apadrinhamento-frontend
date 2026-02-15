@@ -21,6 +21,16 @@ const PrivateRoutes = () => {
     )
 }
 
+const AdminRoute = () => {
+    const auth = useAuth();
+
+    if (auth.role !== "ADMIN") {
+        return <Navigate to='/dashboard' replace />;
+    }
+
+    return <Outlet/>;
+}
+
 export const AppRoutes = () => {
 
     return (
@@ -30,11 +40,13 @@ export const AppRoutes = () => {
                 {/* <Route element={<Outlet/>}> */}
                     <Route path="*" element={<Navigate to='/'/>}/>
                     <Route path="/dashboard" element={<HomePage/>}/>
-                    <Route path="/admin" element={<AdminDashboardPage/>}/>
-                    <Route path="/admin/approval" element={<ApprovalPage/>}/>
-                    <Route path="/admin/users" element={<AllUsersPage/>}/>
-                    <Route path="/admin/stats" element={<StatsPage/>}/>
-                    <Route path="/admin/godparenting" element={<GodparentingPage/>}/>
+                    <Route element={<AdminRoute/>}>
+                        <Route path="/admin" element={<AdminDashboardPage/>}/>
+                        <Route path="/admin/approval" element={<ApprovalPage/>}/>
+                        <Route path="/admin/users" element={<AllUsersPage/>}/>
+                        <Route path="/admin/stats" element={<StatsPage/>}/>
+                        <Route path="/admin/godparenting" element={<GodparentingPage/>}/>
+                    </Route>
                     <Route path="/results" element={<ResultPage/>}/>
                 </Route>
 

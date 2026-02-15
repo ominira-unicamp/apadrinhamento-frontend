@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import Logo from "../assets/logo.png";
+import Logo from "../../assets/logo.png";
 
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import UserService from "../services/user/UserService";
+import UserService from "../../services/user/UserService";
 
 interface IStatus {
     vets: number;
@@ -24,10 +24,6 @@ export const StatsPage = () => {
     }
 
     useEffect(() => {
-        if (!authCtx.status && authCtx.role !== "ADMIN") {
-            navigate('/signup');
-        }
-
         loadStatus();
     }, []);
 

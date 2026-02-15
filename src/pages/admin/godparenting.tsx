@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import Logo from "../assets/logo.png";
+import { toast } from "react-toastify";
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 
-import { useAuth } from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
-import UserService from "../services/user/UserService";
-import { toast } from "react-toastify";
+import Logo from "../../assets/logo.png";
+import { useAuth } from "../../hooks/useAuth";
+import UserService from "../../services/user/UserService";
 
 
 export const GodparentingPage = () => {
@@ -24,12 +24,6 @@ export const GodparentingPage = () => {
     }
 
     useEffect(() => {
-        if (!authCtx.status && authCtx.role !== "ADMIN") {
-            console.log(authCtx);
-            navigate('/signup');
-            return;
-        }
-
         loadAvailableToMatch();
     }, []);
 
