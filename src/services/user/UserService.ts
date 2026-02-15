@@ -36,8 +36,7 @@ export interface IUserGet {
     course:     Course;
     telephone?: string;
     yearOfEntry?: number;
-    approved?:  boolean;
-    rejected?:  boolean;
+    approvalStatus: ApprovalStatus;
     createdAt?: string;
     pronouns:   string[];
     ethnicity:  string[];
