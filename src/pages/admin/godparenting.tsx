@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import Logo from "../assets/logo.png";
+import { toast } from "react-toastify";
 import CopyAllIcon from '@mui/icons-material/CopyAll';
 
-import { useAuth } from "../hooks/useAuth";
-import { useNavigate } from "react-router-dom";
-import UserService from "../services/user/UserService";
-import { toast } from "react-toastify";
+import Logo from "../../assets/logo.png";
+import { useAuth } from "../../hooks/useAuth";
+import UserService from "../../services/user/UserService";
 
 
 export const GodparentingPage = () => {
@@ -14,21 +14,16 @@ export const GodparentingPage = () => {
     const authCtx = useAuth();
     const navigate = useNavigate();
 
-    const { register, handleSubmit } = useForm();
+    const { register, handleSubmit, setValue } = useForm();
 
     const [available, setAvailable] = useState<string>('undefined');
+    const [isRunningMatch, setIsRunningMatch] = useState(false);
 
     const loadAvailableToMatch = async () => {
         setAvailable(await UserService.getToMatch());
     }
 
     useEffect(() => {
-        if (!authCtx.status && authCtx.role !== "ADMIN") {
-            console.log(authCtx);
-            navigate('/signup');
-            return;
-        }
-
         loadAvailableToMatch();
     }, []);
 
@@ -39,6 +34,25 @@ export const GodparentingPage = () => {
         } catch (e) {
             toast.error("Erro ao adicionar apadrinhamento");
             console.error(e);
+        }
+    }
+
+    const handleRunMatching = async () => {
+        if (!window.confirm("Tem certeza que deseja executar o algoritmo de apadrinhamento? Isso pode levar alguns minutos.")) {
+            return;
+        }
+
+        try {
+            setIsRunningMatch(true);
+            toast.info("Executando algoritmo de apadrinhamento...");
+            const result = await UserService.runMatching();
+            setValue("data", JSON.stringify(result, null, 2));
+            toast.success("Algoritmo executado com sucesso! Resultado colocado no campo abaixo.");
+        } catch (error) {
+            toast.error("Erro ao executar algoritmo de apadrinhamento");
+            console.error(error);
+        } finally {
+            setIsRunningMatch(false);
         }
     }
 
@@ -61,9 +75,21 @@ export const GodparentingPage = () => {
                     </>
                     }
                 </div>
+                <div className="flex flex-col flex-1/4 items-center gap-2 bg-zinc-700 rounded-lg p-4">
+                    <button 
+                        onClick={handleRunMatching} 
+                        disabled={isRunningMatch}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-500 rounded-lg px-4 py-2 text-white font-bold text-lg cursor-pointer disabled:cursor-not-allowed transition-colors w-full"
+                    >
+                        {isRunningMatch ? "Executando..." : "Executar Algoritmo Automaticamente"}
+                    </button>
+                    <p className="text-sm text-center text-gray-300">
+                        Clique acima para executar o algoritmo de apadrinhamento automaticamente. O resultado será preenchido no campo abaixo.
+                    </p>
+                </div>
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1/4 items-center gap-2 bg-zinc-700 rounded-lg p-4">
-                    <input type="text" {...register('data')} placeholder="JSON do apadrinhamento" className="bg-zinc-800 text-white p-2 rounded-lg h-full w-full" />
-                    <button type="submit" className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl cursor-pointer">Enviar (NÃO CLIQUE SE NÃO TIVER CERTEZA)</button>
+                    <textarea {...register('data')} placeholder="JSON do apadrinhamento" className="bg-zinc-800 text-white p-2 rounded-lg h-40 w-full font-mono text-sm" />
+                    <button type="submit" className="bg-amber-600 hover:bg-amber-700 rounded-lg px-3 py-2 text-white font-bold text-lg cursor-pointer transition-colors w-full">Enviar (NÃO CLIQUE SE NÃO TIVER CERTEZA)</button>
                 </form>
                 
             </div>

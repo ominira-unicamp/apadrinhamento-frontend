@@ -1,17 +1,10 @@
-import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import Logo from "../assets/logo.png";
+import { useAuth } from "../../hooks/useAuth";
+import Logo from "../../assets/logo.png";
 
 export const AdminDashboardPage = () => {
   const authCtx = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (authCtx.role !== "ADMIN") {
-      navigate("/dashboard");
-    }
-  }, [authCtx.role, navigate]);
 
   const adminPages = [
     {

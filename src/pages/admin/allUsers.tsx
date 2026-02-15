@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Logo from "../assets/logo.png";
-import UserService, { IUserGet } from "../services/user/UserService";
+
+import Logo from "../../assets/logo.png";
+import UserService, { IUserGet } from "../../services/user/UserService";
+import { useAuth } from "../../hooks/useAuth";
 
 export const AllUsersPage = () => {
     const authCtx = useAuth();
@@ -13,13 +14,8 @@ export const AllUsersPage = () => {
     const [filter, setFilter] = useState<"all" | "approved" | "pending" | "rejected" | "bixes">("all");
 
     useEffect(() => {
-        if (authCtx.role !== "ADMIN") {
-            navigate("/dashboard");
-            return;
-        }
-
         loadUsers();
-    }, [authCtx.role, navigate]);
+    }, []);
 
     const loadUsers = async () => {
         try {

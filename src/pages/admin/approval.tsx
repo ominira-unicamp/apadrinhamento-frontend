@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 
-import Logo from "../assets/logo.png";
-import UserService, { IUserGet } from "../services/user/UserService";
+import Logo from "../../assets/logo.png";
+import UserService, { IUserGet } from "../../services/user/UserService";
+import { useAuth } from "../../hooks/useAuth";
 
 interface IUserApproval extends IUserGet {
     next: IUserApproval | undefined;
@@ -66,11 +66,6 @@ export const ApprovalPage = () => {
     }, [users])
 
     useEffect(() => {
-        if (authCtx.role !== "ADMIN") {
-            navigate('/login');
-            return;
-        }
-
         loadPendingApprovals();
     }, []);
 
