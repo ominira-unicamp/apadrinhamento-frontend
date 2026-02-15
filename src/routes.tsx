@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Outlet, Navigate, Route } from "react-router-dom
 import { useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 
-import { SignupPage, LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage } from "./pages";
+import { SignupPage, LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage, TinderPage } from "./pages";
 
 const PrivateRoutes = () => {
     const auth = useAuth();
@@ -40,6 +40,7 @@ export const AppRoutes = () => {
                 {/* <Route element={<Outlet/>}> */}
                     <Route path="*" element={<Navigate to='/'/>}/>
                     <Route path="/dashboard" element={<HomePage/>}/>
+                    <Route path="/tinder" element={<TinderPage/>}/>
                     <Route element={<AdminRoute/>}>
                         <Route path="/admin" element={<AdminDashboardPage/>}/>
                         <Route path="/admin/approval" element={<ApprovalPage/>}/>

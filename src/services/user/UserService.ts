@@ -100,6 +100,11 @@ async function getStats(): Promise<IStatus> {
     return response.data;
 }
 
+async function getGodparents(): Promise<IUserGet[]> {
+    const response = await Api().get(`/users/godparents`);
+    return response.data;
+}
+
 async function addGodparentRelations(data: string): Promise<void> {
     await Api().post(`/users/addGodparentRelations`, data);
 }
@@ -115,4 +120,4 @@ async function runMatching(): Promise<any> {
     return response.data;
 }
 
-export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, runMatching, addGodparentRelations };
+export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, runMatching, addGodparentRelations, getGodparents };
