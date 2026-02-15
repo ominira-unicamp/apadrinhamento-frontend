@@ -15,7 +15,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-const formSchema = z.object({
+const signupFormSchema = z.object({
   email: z.string().regex(/^[a-zA-Z][0-9]{6}@dac.unicamp.br$/, "Use seu email institucional da UNICAMP"),
   password: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
   confirmPassword: z.string().min(8, "Confirme sua senha"),
@@ -42,7 +42,31 @@ const formSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export type formType = z.infer<typeof formSchema>;
+const editFormSchema = z.object({
+  email: z.string().optional(),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+  name: z.string().min(1, "Nome é obrigatório"),
+  telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
+  course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
+  role: z.enum(["bixe", "veterane"], { required_error: "Selecione uma opção" }),
+  yearOfEntry: z.number({ required_error: "Ano de ingresso é obrigatório" }).int().min(1900).max(new Date().getFullYear() + 1, "Ano inválido"),
+  pronouns: z.array(z.string()),
+  otherPronouns: z.string().optional(),
+  ethnicity: z.array(z.string()),
+  otherEthnicity: z.string().optional(),
+  city: z.string().min(1, "Informe sua cidade").refine((city: string) => city != 'Cidade', { message: 'Informe sua cidade' }),
+  lgbt: z.array(z.string()),
+  otherLgbt: z.string().optional(),
+  parties: z.number().min(0).max(10),
+  hobby: z.string().optional(),
+  music: z.string().optional(),
+  games: z.string().optional(),
+  sports: z.string().optional(),
+  picture: z.any().optional().refine((picture: any) => !picture?.length || ACCEPTED_IMAGE_TYPES.includes(picture[0]?.type), { message: "Selecione uma imagem válida" }).refine((picture: any) => !picture?.length || picture[0]?.size <= 5242880, { message: 'Imagem muito grande. Limite: 5MB' }),
+});
+
+export type formType = z.infer<typeof signupFormSchema>;
 
 interface citiesData {
   id: number;
@@ -50,6 +74,10 @@ interface citiesData {
 }
 
 export const SignupPage = () => {
+  const authCtx = useAuth();
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  
   const {
     register,
     handleSubmit,
@@ -57,7 +85,7 @@ export const SignupPage = () => {
     setValue,
     watch,
   } = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(state?.edit ? editFormSchema : signupFormSchema),
     shouldUseNativeValidation: false,
     reValidateMode: "onBlur",
     defaultValues: {
@@ -67,10 +95,6 @@ export const SignupPage = () => {
       parties: 5,
     }
   });
-
-  const authCtx = useAuth();
-  const navigate = useNavigate();
-  const { state } = useLocation();
   
   const formatTelephone = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -90,7 +114,7 @@ export const SignupPage = () => {
     return formatted.replace(/\D/g, '').slice(0, 11);
   };
 
-  const onSubmit = async (data: formType) => {
+  const onSubmit = async (data: any) => {
     if(data.otherEthnicity) {
       data.ethnicity.push(data.otherEthnicity);
     }
@@ -230,13 +254,17 @@ export const SignupPage = () => {
                 `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${stateId}/municipios?orderBy=nome`
               );
               handleStateChange(citiesResponse);
+              
+              // Set city AFTER cities are loaded
+              setValue("city", response.city);
             }
           } catch (error) {
             console.error("Error loading city/state:", error);
+            setValue("city", response.city || 'Cidade');
           }
+        } else {
+          setValue("city", response.city || 'Cidade');
         }
-        
-        setValue("city", response.city || 'Cidade');
         setValue("otherLgbt", response.lgbt.filter((v) => !["Lésbica", "Gay", "Bissexual", "Trans", "Queer", "Intersexo", "Assexual"].includes(v))[0]);
         setValue("lgbt", response.lgbt.filter((v) => ["Lésbica", "Gay", "Bissexual", "Trans", "Queer", "Intersexo", "Assexual"].includes(v)));
         setValue("parties", response.parties);
@@ -277,43 +305,60 @@ export const SignupPage = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="mt-5 w-full max-w-lg bg-zinc-700 p-6 rounded-lg flex flex-col gap-10"
       >
-        <TextField
-          label="E-mail institucional"
-          variant="outlined"
-          type="email"
-          placeholder="a123456@dac.unicamp.br"
-          sx={inputStyle}
-          slotProps={{ inputLabel: { shrink: true } }}
-          {...register("email")}
-        />
-        {errors.email && (
-          <span className="text-red-400">{errors.email.message}</span>
-        )}
+        {!state?.edit && (
+          <>
+            <TextField
+              label="E-mail institucional"
+              variant="outlined"
+              type="email"
+              placeholder="a123456@dac.unicamp.br"
+              sx={inputStyle}
+              slotProps={{ inputLabel: { shrink: true } }}
+              {...register("email")}
+            />
+            {errors.email && (
+              <span className="text-red-400">{errors.email.message}</span>
+            )}
 
-        <TextField
-          label="Senha"
-          variant="outlined"
-          type="password"
-          placeholder="Mínimo 8 caracteres"
-          sx={inputStyle}
-          slotProps={{ inputLabel: { shrink: true } }}
-          {...register("password")}
-        />
-        {errors.password && (
-          <span className="text-red-400">{errors.password.message}</span>
-        )}
+            <TextField
+              label="Senha"
+              variant="outlined"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              sx={inputStyle}
+              slotProps={{ inputLabel: { shrink: true } }}
+              {...register("password")}
+            />
+            {errors.password && (
+              <span className="text-red-400">{errors.password.message}</span>
+            )}
 
-        <TextField
-          label="Confirmar Senha"
-          variant="outlined"
-          type="password"
-          placeholder="Digite a senha novamente"
-          sx={inputStyle}
-          slotProps={{ inputLabel: { shrink: true } }}
-          {...register("confirmPassword")}
-        />
-        {errors.confirmPassword && (
-          <span className="text-red-400">{errors.confirmPassword.message}</span>
+            <TextField
+              label="Confirmar Senha"
+              variant="outlined"
+              type="password"
+              placeholder="Digite a senha novamente"
+              sx={inputStyle}
+              slotProps={{ inputLabel: { shrink: true } }}
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword && (
+              <span className="text-red-400">{errors.confirmPassword.message}</span>
+            )}
+          </>
+        )}
+        
+        {state?.edit && (
+          <div className="flex flex-col gap-2">
+            <p className="text-lg">Precisa alterar sua senha?</p>
+            <button
+              type="button"
+              className="bg-blue-600 text-white py-2 rounded-lg cursor-pointer hover:bg-blue-700"
+              onClick={() => navigate('/reset-password')}
+            >
+              Redefinir Senha
+            </button>
+          </div>
         )}
         
         <TextField
