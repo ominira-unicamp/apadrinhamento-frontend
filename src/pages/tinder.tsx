@@ -103,9 +103,6 @@ export const TinderPage = () => {
                                     <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
                                         {selectedGodparent.name}
                                     </Typography>
-                                    <Typography variant="body1" sx={{ color: '#d1d5db' }}>
-                                        {selectedGodparent.email}
-                                    </Typography>
                                 </div>
                             </div>
 
@@ -121,11 +118,6 @@ export const TinderPage = () => {
                                 <Typography variant="body2" sx={{ color: '#d1d5db', mb: 0.5 }}>
                                     <strong>Ano de Entrada:</strong> {selectedGodparent.yearOfEntry}
                                 </Typography>
-                                {selectedGodparent.telephone && (
-                                    <Typography variant="body2" sx={{ color: '#d1d5db', mb: 0.5 }}>
-                                        <strong>Telefone:</strong> {selectedGodparent.telephone}
-                                    </Typography>
-                                )}
                                 {selectedGodparent.city && (
                                     <Typography variant="body2" sx={{ color: '#d1d5db', mb: 0.5 }}>
                                         <strong>Cidade:</strong> {selectedGodparent.city}
@@ -146,23 +138,10 @@ export const TinderPage = () => {
                                 </div>
                             )}
 
-                            {selectedGodparent.ethnicity && selectedGodparent.ethnicity.length > 0 && (
-                                <div>
-                                    <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
-                                        Etnia
-                                    </Typography>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedGodparent.ethnicity.map((eth, index) => (
-                                            <Chip key={index} label={eth} sx={{ backgroundColor: '#3f3f46', color: 'white' }} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             {selectedGodparent.lgbt && selectedGodparent.lgbt.length > 0 && (
                                 <div>
                                     <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
-                                        LGBT+
+                                        LGBTQIAPN+
                                     </Typography>
                                     <div className="flex flex-wrap gap-2">
                                         {selectedGodparent.lgbt.map((item, index) => (
