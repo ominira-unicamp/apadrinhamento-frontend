@@ -753,8 +753,7 @@ export const WhiteboardPage = () => {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => {
-                                    handleConfirmFinalize();
-                                    setTimeout(() => navigate("/dashboard"), 500);
+                                    handleConfirmFinalize().then(() => navigate("/dashboard"));
                                 }}
                                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
                             >

@@ -422,6 +422,12 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
         }
     }, [authCtx.status, state?.edit]);
 
+    useEffect(() => {
+        if (Object.values(errors).length > 0) {
+            toast.warn("Por favor, corrija os erros no formulário antes de enviar.");
+        }
+    }, [errors])
+
     return (
         <div className="w-full min-h-screen bg-zinc-800 flex flex-col items-center p-5 gap-y-6 text-white">
             {state?.edit && (
