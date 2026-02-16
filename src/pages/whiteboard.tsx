@@ -350,7 +350,7 @@ export const WhiteboardPage = () => {
             </h1>
             <div className="relative flex gap-4 w-full md:w-4/6 h-fit max-h-5/6">
                 {/* Toolbar */}
-                <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-2 rounded-xl bg-zinc-900/40 p-2 shadow-lg backdrop-blur-md md:static md:gap-3 md:bg-zinc-700 md:p-3 md:rounded-lg md:shadow-none md:backdrop-blur-0 flex-shrink-0">
+                <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-3 rounded-2xl bg-zinc-900/45 p-3 shadow-xl backdrop-blur-md md:static flex-shrink-0">
                     <input
                         type="file"
                         multiple
