@@ -209,23 +209,27 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
                     ...signupData
                 } = data;
 
-                const pendingToast = toast.loading("Criando sua conta...");
-                await authService.signup(signupData);
-                toast.dismiss(pendingToast);
+                await toast.promise(
+                    authService.signup(signupData),
+                    {
+                        pending: "Criando conta...",
+                        success: "Conta criada com sucesso!",
+                        error: {
+                            render: (error) => {
+                                return `Erro ao criar conta: ${error?.data || "Desconhecido"}`;
+                            },
+                        },
+                    }
+                );
 
                 await authCtx
                     .login({ email: data.email, password: data.password })
                     .catch(console.error);
 
-                toast.success("Conta criada com sucesso!");
 
                 onSignupComplete(signupData.role);
             } catch (error: any) {
                 console.error("Signup error details:", error);
-                const errorMessage =
-                    error?.message ||
-                    "Erro ao criar conta. Por favor, tente novamente.";
-                toast.error(errorMessage);
                 return;
             }
         } else {
