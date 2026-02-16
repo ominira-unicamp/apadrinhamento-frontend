@@ -56,6 +56,8 @@ export const TinderPage = () => {
             await UserService.update(uid, { selectedGodparentsIds: approvedGodparents.map(g => g.id) });
             toast.success("Lista de padrinhes escolhida com sucesso!");
             navigate("/dashboard");
+            // Should update the token, but works
+            authCtx.status = true;
         } catch (_e) {
             toast.error("Erro ao salvar padrinhes selecionades.");
             return;
