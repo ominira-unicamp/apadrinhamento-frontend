@@ -1,5 +1,5 @@
 import { IconButton, Tooltip, Modal } from "@mui/material";
-import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo, ArrowUpward, ArrowDownward, ArrowBack, ArrowForward } from "@mui/icons-material";
+import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo, ArrowUpward, ArrowDownward, ArrowBack, ArrowForward, DeleteSweep } from "@mui/icons-material";
 
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +28,8 @@ export const WhiteboardPage = () => {
     const [isMobilePanningEnabled, setIsMobilePanningEnabled] = useState(false);
     const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
     const [finalizedImageUrl, setFinalizedImageUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasExistingWhiteboard, setHasExistingWhiteboard] = useState(false);
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
     const historyRef = useRef<ImageData[][]>([[]]);
@@ -37,6 +39,45 @@ export const WhiteboardPage = () => {
 
     const authCtx = useAuth();
     const navigate = useNavigate();
+
+    // Load existing whiteboard on mount
+    useEffect(() => {
+        const loadExistingWhiteboard = async () => {
+            try {
+                const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
+                const userData = await UserService.get(uid);
+                
+                if (userData.whiteboard) {
+                    setHasExistingWhiteboard(true);
+                    const img = new Image();
+                    img.onload = () => {
+                        setImages([{
+                            image: img,
+                            x: 0,
+                            y: 0,
+                            width: CANVAS_WIDTH,
+                            height: CANVAS_HEIGHT,
+                        }]);
+                        pushHistory([{
+                            image: img,
+                            x: 0,
+                            y: 0,
+                            width: CANVAS_WIDTH,
+                            height: CANVAS_HEIGHT,
+                        }]);
+                        toast.info("Whiteboard anterior carregado. Você pode editá-lo ou criar um novo.");
+                    };
+                    img.src = userData.whiteboard;
+                }
+            } catch (error) {
+                console.error("Error loading existing whiteboard:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadExistingWhiteboard();
+    }, [authCtx.token]);
 
     const pushHistory = (nextImages: ImageData[]) => {
         let nextHistory = historyRef.current.slice(0, historyStepRef.current + 1);
@@ -82,6 +123,17 @@ export const WhiteboardPage = () => {
         });
         setSelectedIdx(null);
         historyDirtyRef.current = false;
+    };
+
+    const clearAll = () => {
+        if (images.length === 0) return;
+        if (window.confirm("Tem certeza que deseja limpar todo o canvas? Esta ação não pode ser desfeita além do histórico salvo.")) {
+            setImages([]);
+            pushHistory([]);
+            setSelectedIdx(null);
+            historyDirtyRef.current = false;
+            toast.info("Canvas limpo!");
+        }
     };
 
     useEffect(() => {
@@ -366,15 +418,14 @@ export const WhiteboardPage = () => {
         const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
         try {
             await UserService.update(uid, { whiteboard: finalizedImageUrl! });
-            toast.success("Montagem salva com sucesso!");
+            toast.success("Montagem salva com sucesso! Você pode continuar editando ou voltar ao painel.");
             authCtx.status = true; // Force status to true to ensure user is recognized as having completed the whiteboard step
-            navigate("/dashboard");
+            setFinalizeModalOpen(false);
         } catch (error) {
             toast.error("Erro ao salvar a montagem. Por favor, tente novamente.");
             console.error("Error saving whiteboard:", error);
             return;
         }
-        setFinalizeModalOpen(false);
     };
 
     const handleCloseFinalizeModal = () => {
@@ -382,12 +433,28 @@ export const WhiteboardPage = () => {
         setFinalizedImageUrl(null);
     };
 
+    if (isLoading) {
+        return (
+            <div className="w-full h-full min-h-screen bg-zinc-800 flex items-center justify-center text-white">
+                <p className="text-2xl">Carregando...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full h-full min-h-screen bg-zinc-800 flex flex-col items-center justify-center p-4 md:p-5 gap-y-5 md:gap-y-6 text-white">
             <h1 className="text-2xl md:text-4xl font-bold text-center max-w-xl">
                 Crie uma montagem que represente você e seus interesses, usando as imagens que desejar!
             </h1>
             <div className="relative flex gap-4 w-full md:w-4/6 h-fit max-h-5/6">
+                {hasExistingWhiteboard && (
+                    <button
+                        className="fixed top-4 left-4 bg-blue-600 rounded-lg px-3 text-white font-bold text-xl cursor-pointer z-50"
+                        onClick={() => navigate('/dashboard')}
+                    >
+                        ← Voltar
+                    </button>
+                )}
                 <button
                     className="fixed top-4 right-4 bg-amber-600 rounded-lg px-3 text-white font-bold text-xl cursor-pointer z-50"
                     onClick={() => authCtx.logout().then(() => navigate('/'))}
@@ -502,6 +569,23 @@ export const WhiteboardPage = () => {
                                 }}
                             >
                                 <Delete />
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+
+                    <Tooltip title="Clear all images" placement="right">
+                        <span>
+                            <IconButton
+                                onClick={clearAll}
+                                disabled={images.length === 0}
+                                size="large"
+                                sx={{
+                                    color: images.length === 0 ? "#9CA3AF" : "#ef4444",
+                                    "&:hover": images.length > 0 ? { bgcolor: "rgba(239, 68, 68, 0.15)" } : {},
+                                    cursor: images.length === 0 ? "not-allowed" : "pointer",
+                                }}
+                            >
+                                <DeleteSweep />
                             </IconButton>
                         </span>
                     </Tooltip>
@@ -659,19 +743,30 @@ export const WhiteboardPage = () => {
                             className="max-w-full max-h-96 object-contain rounded-lg mb-4 border-2 border-cyan-400"
                         />
                     )}
-                    <div className="flex gap-4 mt-auto pt-4">
-                        <button
-                            onClick={handleCloseFinalizeModal}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
-                        >
-                            Voltar
-                        </button>
+                    <div className="flex flex-col gap-3 mt-auto pt-4">
                         <button
                             onClick={handleConfirmFinalize}
-                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
                         >
-                            Confirmar
+                            Salvar e Continuar Editando
                         </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    handleConfirmFinalize();
+                                    setTimeout(() => navigate("/dashboard"), 500);
+                                }}
+                                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
+                            >
+                                Salvar e Ir para Painel
+                            </button>
+                            <button
+                                onClick={handleCloseFinalizeModal}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </Modal>
