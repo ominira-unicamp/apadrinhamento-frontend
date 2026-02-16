@@ -71,12 +71,12 @@ export const ResetPasswordPage = () => {
   useEffect(() => {
     if (!token && !authCtx.token) {
       toast.error("Você precisa estar autenticado ou ter um link válido");
-      setTimeout(() => navigate("/login"), 2000);
+      navigate("/login");
     }
 
     if (token && !isValidToken) {
       toast.error("Link de redefinição inválido ou expirado");
-      setTimeout(() => navigate("/login"), 2000);
+      navigate("/login");
     }
   }, [token, authCtx.token, navigate, isValidToken]);
 
