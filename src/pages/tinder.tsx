@@ -2,13 +2,12 @@ import z from "zod";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
-import { Grid2, Modal, Box, Typography, Chip, Divider, Button } from "@mui/material";
-import { CheckCircle } from "@mui/icons-material";
+import { jwtDecode } from "jwt-decode";
+import { Modal, Box, Typography, Chip, Divider, Button, IconButton } from "@mui/material";
+import { CheckCircle, Close } from "@mui/icons-material";
 
-import Logo from "../assets/logo.png";
 import UserService, { IUserGet } from "../services/user/UserService";
 import { useAuth } from "../hooks/useAuth";
-import { jwtDecode } from "jwt-decode";
 
 
 export const TinderPage = () => {
@@ -81,12 +80,12 @@ export const TinderPage = () => {
     }, []);
 
     return (
-        <div className="w-full h-full flex flex-col items-center gap-3 p-2 pt-5 bg-zinc-800 overflow-y-scroll">
-            <Grid2 container spacing={2} className="w-full max-w-4xl">
+        <div className="w-full h-full flex flex-col items-center gap-3 p-2 pt-5 bg-zinc-800 overflow-y-scroll pb-20">
+            <div className="grid w-full max-w-4xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-3">
                 {godparents.map(godparent => (
-                    <Grid2 key={godparent.id}>
-                        <div 
-                            className="flex flex-col items-center gap-2 bg-zinc-700 rounded-lg p-4 aspect-square w-50 cursor-pointer hover:bg-zinc-600 transition-colors relative"
+                    <div key={godparent.id}>
+                        <div
+                            className="flex flex-col items-center gap-2 bg-zinc-700 rounded-lg p-4 aspect-square w-full cursor-pointer hover:bg-zinc-600 transition-colors relative"
                             onClick={() => handleOpenModal(godparent)}
                         >
                             {isGodparentSelected(godparent) && (
@@ -94,13 +93,13 @@ export const TinderPage = () => {
                                     <CheckCircle sx={{ color: '#9ca3af', fontSize: '2rem' }} />
                                 </div>
                             )}
-                            <img src={Logo} className="w-24 h-24 rounded-full" />
-                            <h1 className="text-xl text-white font-bold">{godparent.name}</h1>
-                            <h2 className="text-md text-gray-300">{godparent.course} - {godparent.yearOfEntry}</h2>
+                            <img src={godparent.whiteboard} className="w-20 h-20 sm:w-24 sm:h-24 rounded-sm object-scale-down" />
+                            <h1 className="text-lg sm:text-xl text-white font-bold text-center">{godparent.name}</h1>
+                            <h2 className="text-sm sm:text-base text-gray-300 text-center">{godparent.course} - {godparent.yearOfEntry}</h2>
                         </div>
-                    </Grid2>
+                    </div>
                 ))}
-            </Grid2>
+            </div>
 
             <Modal
                 open={modalOpen}
@@ -116,17 +115,36 @@ export const TinderPage = () => {
                     backgroundColor: '#27272a',
                     borderRadius: '0.75rem',
                     padding: '2rem',
-                    width: 'min(80vw, 80vh)',
-                    height: 'min(80vw, 80vh)',
+                    width: 'min(90vw, 90vh)',
+                    height: 'min(90vw, 90vh)',
                     aspectRatio: '1 / 1',
                     display: 'flex',
                     flexDirection: 'column',
+                    position: 'relative',
                     outline: 'none',
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                    '@media (max-width: 640px)': {
+                        width: '92vw',
+                        height: '88vh',
+                        aspectRatio: 'auto',
+                        padding: '1.5rem',
+                    },
                 }}>
+                    <IconButton
+                        aria-label="Fechar"
+                        onClick={handleCloseModal}
+                        sx={{
+                            position: 'absolute',
+                            top: '0.5rem',
+                            right: '0.5rem',
+                            color: '#e5e7eb',
+                        }}
+                    >
+                        <Close />
+                    </IconButton>
                     {selectedGodparent && (
                         <div className="flex flex-col gap-4 h-full overflow-y-auto">
-                            <img src={Logo} className="w-20 h-20 rounded-full mx-auto" alt={selectedGodparent.name} />
+                            <img src={selectedGodparent.whiteboard} className="w-fit max-w-11/12 h-fit aspect-auto mx-auto" alt={selectedGodparent.name} />
                             <div className="flex items-center gap-4">
                                 <div>
                                     <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
