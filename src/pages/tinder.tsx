@@ -1,13 +1,20 @@
+import z from "zod";
 import { useEffect, useState } from "react";
-import Logo from "../assets/logo.png";
 import { toast } from "react-toastify";
-
-import UserService, { IUserGet } from "../services/user/UserService";
+import { useNavigate } from "react-router";
 import { Grid2, Modal, Box, Typography, Chip, Divider, Button } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 
+import Logo from "../assets/logo.png";
+import UserService, { IUserGet } from "../services/user/UserService";
+import { useAuth } from "../hooks/useAuth";
+import { jwtDecode } from "jwt-decode";
+
 
 export const TinderPage = () => {
+
+    const authCtx = useAuth();
+    const navigate = useNavigate();
 
     const [godparents, setGodparents] = useState<IUserGet[]>([]);
     const [selectedGodparent, setSelectedGodparent] = useState<IUserGet | null>(null);
@@ -34,6 +41,26 @@ export const TinderPage = () => {
             }
         });
     };
+
+    const handleSubmit = async () => {
+        const min = (godparents.length < 5 ? godparents.length : 5);
+        if (approvedGodparents.length < min) {
+            toast.warn(`Selecione pelo menos ${min} padrinhes para continuar.`);
+            return;
+        }
+
+        try {
+            const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
+            z.string().uuid().parse(uid);
+
+            await UserService.update(uid, { selectedGodparentsIds: approvedGodparents.map(g => g.id) });
+            toast.success("Lista de padrinhes escolhida com sucesso!");
+            navigate("/dashboard");
+        } catch (_e) {
+            toast.error("Erro ao salvar padrinhes selecionades.");
+            return;
+        }
+    }
 
     const isGodparentSelected = (godparent: IUserGet) => {
         return approvedGodparents.some(g => g.id === godparent.id);
@@ -203,7 +230,12 @@ export const TinderPage = () => {
                     )}
                 </Box>
             </Modal>
-    
+
+            <button className={`absolute bottom-4 z-30 ${approvedGodparents.length < (godparents.length < 5 ? godparents.length : 5) ? "bg-zinc-700 hover:bg-zinc-600" : "bg-amber-600 hover:bg-amber-700 cursor-pointer"} text-white text-xl font-bold py-2 px-4 rounded-lg`} onClick={handleSubmit}>
+                <Typography variant="h6" sx={{ color: '#d1d5db' }}>
+                    {approvedGodparents.length} padrinhes selecionades  
+                </Typography>
+            </button>
         </div>
     )
 }

@@ -64,7 +64,7 @@ interface godparentRelation {
 }
 
 
-async function update(userId: string, data: formType): Promise<IUser> {
+async function update(userId: string, data: Partial<formType>): Promise<IUser> {
 
     const response = await Api().put(`/users/${userId}`, data);
     return response.data;
