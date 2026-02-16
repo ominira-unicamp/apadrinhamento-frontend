@@ -1,5 +1,5 @@
-import { Typography, IconButton, Tooltip, Modal, Box } from "@mui/material";
-import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle } from "@mui/icons-material";
+import { IconButton, Tooltip, Modal } from "@mui/material";
+import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo } from "@mui/icons-material";
 
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
@@ -20,6 +20,56 @@ export const WhiteboardPage = () => {
     const [finalizedImageUrl, setFinalizedImageUrl] = useState<string | null>(null);
     const stageRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
+    const historyRef = useRef<ImageData[][]>([[]]);
+    const historyStepRef = useRef(0);
+    const imagesRef = useRef<ImageData[]>([]);
+    const historyDirtyRef = useRef(false);
+
+    const pushHistory = (nextImages: ImageData[]) => {
+        let nextHistory = historyRef.current.slice(0, historyStepRef.current + 1);
+        nextHistory = nextHistory.concat([nextImages]);
+
+        if (nextHistory.length > 8) {
+            const overflow = nextHistory.length - 8;
+            nextHistory = nextHistory.slice(overflow);
+        }
+
+        historyRef.current = nextHistory;
+        historyStepRef.current = nextHistory.length - 1;
+    };
+
+    const commitHistoryIfDirty = () => {
+        if (!historyDirtyRef.current) return;
+        pushHistory(imagesRef.current);
+        historyDirtyRef.current = false;
+    };
+
+    const handleUndo = () => {
+        if (historyStepRef.current === 0) return;
+        historyStepRef.current -= 1;
+        const previous = historyRef.current[historyStepRef.current];
+        setImages(previous);
+        historyDirtyRef.current = false;
+    };
+
+    const handleRedo = () => {
+        if (historyStepRef.current === historyRef.current.length - 1) return;
+        historyStepRef.current += 1;
+        const next = historyRef.current[historyStepRef.current];
+        setImages(next);
+        historyDirtyRef.current = false;
+    };
+
+    const deleteSelected = () => {
+        if (selectedIdx === null) return;
+        setImages((prev) => {
+            const next = prev.filter((_, i) => i !== selectedIdx);
+            pushHistory(next);
+            return next;
+        });
+        setSelectedIdx(null);
+        historyDirtyRef.current = false;
+    };
 
     useEffect(() => {
         if (selectedIdx !== null && transformerRef.current) {
@@ -31,11 +81,12 @@ export const WhiteboardPage = () => {
     }, [selectedIdx]);
 
     useEffect(() => {
+        imagesRef.current = images;
+    }, [images]);
+
+    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Delete" && selectedIdx !== null) {
-                setImages((prev) => prev.filter((_, i) => i !== selectedIdx));
-                setSelectedIdx(null);
-            }
+            if (e.key === "Delete") deleteSelected();
         };
 
         window.addEventListener("keydown", handleKeyDown);
@@ -64,16 +115,20 @@ export const WhiteboardPage = () => {
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    setImages((prev) => [
-                        ...prev,
-                        {
-                            image: img,
-                            x: 100,
-                            y: 100,
-                            width: img.width,
-                            height: img.height,
-                        },
-                    ]);
+                    setImages((prev) => {
+                        const next = [
+                            ...prev,
+                            {
+                                image: img,
+                                x: 100,
+                                y: 100,
+                                width: img.width,
+                                height: img.height,
+                            },
+                        ];
+                        pushHistory(next);
+                        return next;
+                    });
                 };
                 img.src = event.target?.result as string;
             };
@@ -139,8 +194,8 @@ export const WhiteboardPage = () => {
         node.scaleX(1);
         node.scaleY(1);
 
-        setImages((prev) =>
-            prev.map((img, i) =>
+        setImages((prev) => {
+            const next = prev.map((img, i) =>
                 i === idx
                     ? {
                         ...img,
@@ -150,16 +205,34 @@ export const WhiteboardPage = () => {
                         y: node.y(),
                     }
                     : img
-            )
-        );
+            );
+            historyDirtyRef.current = true;
+            return next;
+        });
     };
 
     const handleImageDragEnd = (idx: number, e: any) => {
-        setImages((prev) =>
-            prev.map((img, i) =>
+        setImages((prev) => {
+            const next = prev.map((img, i) =>
                 i === idx ? { ...img, x: e.target.x(), y: e.target.y() } : img
-            )
-        );
+            );
+            historyDirtyRef.current = true;
+            return next;
+        });
+    };
+
+    const handleSelectImage = (idx: number) => {
+        if (selectedIdx !== null && selectedIdx !== idx) {
+            commitHistoryIfDirty();
+        }
+        setSelectedIdx(idx);
+    };
+
+    const handleStageClick = () => {
+        if (selectedIdx !== null) {
+            setSelectedIdx(null);
+            commitHistoryIfDirty();
+        }
     };
 
     const handleZoomIn = () => {
@@ -167,10 +240,6 @@ export const WhiteboardPage = () => {
         const container = stage.getContainer();
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
-        const minZoomX = containerWidth / 1500;
-        const minZoomY = containerHeight / 800;
-        const minZoom = Math.max(minZoomX, minZoomY);
-
         const newScale = Math.min(zoom * 1.2, 3);
         setZoom(newScale);
 
@@ -246,10 +315,10 @@ export const WhiteboardPage = () => {
 
     return (
         <div className="w-full h-full min-h-screen bg-zinc-800 flex flex-col items-center justify-center p-5 gap-y-6 text-white">
-            <Typography variant="h4" className="text-center">
+            <h1 className="text-4xl font-bold text-center max-w-xl">
                 Crie uma montagem que represente você e seus interesses, usando as imagens que desejar!
-            </Typography>
-            <div className="flex gap-4 w-4/6">
+            </h1>
+            <div className="flex gap-4 w-4/6  h-fit max-h-5/6">
                 {/* Toolbar */}
                 <div className="flex flex-col items-center gap-3 bg-zinc-700 p-3 rounded-lg flex-shrink-0">
                     <input
@@ -318,15 +387,36 @@ export const WhiteboardPage = () => {
 
                     <div className="w-8 h-px bg-white/20" />
 
+                    <Tooltip title="Undo" placement="right">
+                        <IconButton
+                            onClick={handleUndo}
+                            size="large"
+                            sx={{
+                                color: "white",
+                                "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
+                            }}
+                        >
+                            <Undo />
+                        </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Redo" placement="right">
+                        <IconButton
+                            onClick={handleRedo}
+                            size="large"
+                            sx={{
+                                color: "white",
+                                "&:hover": { bgcolor: "rgba(255, 255, 255, 0.15)" },
+                            }}
+                        >
+                            <Redo />
+                        </IconButton>
+                    </Tooltip>
+
                     <Tooltip title="Delete selected image" placement="right">
                         <span>
                             <IconButton
-                                onClick={() => {
-                                    if (selectedIdx !== null) {
-                                        setImages((prev) => prev.filter((_, i) => i !== selectedIdx));
-                                        setSelectedIdx(null);
-                                    }
-                                }}
+                                onClick={deleteSelected}
                                 disabled={selectedIdx === null}
                                 size="large"
                                 sx={{
@@ -368,7 +458,7 @@ export const WhiteboardPage = () => {
                         width={1500}
                         height={800}
                         onWheel={handleWheel}
-                        onClick={() => setSelectedIdx(null)}
+                        onClick={handleStageClick}
                     >
                         <Layer>
                             {images.map((item, idx) => (
@@ -383,7 +473,7 @@ export const WhiteboardPage = () => {
                                     draggable
                                     onClick={(e) => {
                                         e.cancelBubble = true;
-                                        setSelectedIdx(idx);
+                                        handleSelectImage(idx);
                                     }}
                                     onDragEnd={(e) => handleImageDragEnd(idx, e)}
                                     onTransformEnd={() => {
@@ -401,7 +491,7 @@ export const WhiteboardPage = () => {
                             {selectedIdx !== null && (
                                 <Transformer
                                     ref={transformerRef}
-                                    boundBoxFunc={(oldBoundBox, newBoundBox) => {
+                                    boundBoxFunc={(_oldBoundBox, newBoundBox) => {
                                         return newBoundBox;
                                     }}
                                 />
@@ -422,48 +512,30 @@ export const WhiteboardPage = () => {
                     backgroundColor: 'rgba(128, 128, 128, 0.2)',
                 }}
             >
-                <Box sx={{
-                    backgroundColor: '#27272a',
-                    borderRadius: '0.75rem',
-                    padding: '2rem',
-                    width: 'min(80vw, 80vh)',
-                    maxHeight: '80vh',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    outline: 'none',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                }}>
-                    <Typography variant="h5" sx={{ color: 'white', fontWeight: 'bold', mb: 2 }}>
-                        Preview da Montagem
-                    </Typography>
+                <div className="bg-zinc-800 rounded-xl p-8 w-[90vw] max-h-[90vh] max-w-2xl flex flex-col shadow-2xl outline-none overflow-y-auto">
+                    <h2 className="text-white text-2xl font-bold mb-4">Preview da Montagem</h2>
                     {finalizedImageUrl && (
                         <img
                             src={finalizedImageUrl}
                             alt="Finalized canvas"
-                            style={{
-                                maxWidth: '100%',
-                                maxHeight: '60vh',
-                                objectFit: 'contain',
-                                borderRadius: '0.5rem',
-                                marginBottom: '1rem',
-                            }}
+                            className="max-w-full max-h-96 object-contain rounded-lg mb-4 border-2 border-cyan-400"
                         />
                     )}
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: 'auto' }}>
+                    <div className="flex gap-4 mt-auto pt-4">
                         <button
                             onClick={handleCloseFinalizeModal}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer"
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
                         >
                             Voltar
                         </button>
                         <button
                             onClick={handleConfirmFinalize}
-                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer"
+                            className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded-lg cursor-pointer transition"
                         >
                             Confirmar
                         </button>
                     </div>
-                </Box>
+                </div>
             </Modal>
         </div>
     );
