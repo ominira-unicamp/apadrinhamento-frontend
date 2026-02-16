@@ -124,4 +124,12 @@ async function updatePassword(userId: string, currentPassword: string, newPasswo
     await Api().put(`/users/${userId}/password`, { currentPassword, newPassword });
 }
 
-export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, runMatching, addGodparentRelations, getGodparents, updatePassword };
+async function resetPassword(email: string): Promise<void> {
+    await Api().post(`/users/resetPassword`, { email });
+}
+
+async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
+    await Api().post(`/users/resetPassword/confirm`, { token, newPassword });
+}
+
+export default { update, get, getPendingApprovals, getGodparents, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations, runMatching, updatePassword, resetPassword, confirmPasswordReset };

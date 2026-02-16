@@ -3,58 +3,137 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { TextField } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo } from "react";
 import { jwtDecode } from "jwt-decode";
 
 import Logo from "../assets/logo.png";
 import { useAuth } from "../hooks/useAuth";
 import UserService from "../services/user/UserService";
 
-const resetPasswordSchema = z.object({
-  currentPassword: z.string().min(8, "Senha atual deve ter pelo menos 8 caracteres"),
-  newPassword: z.string().min(8, "Nova senha deve ter pelo menos 8 caracteres"),
+const authenticatedResetSchema = z.object({
+  currentPassword: z.string()
+    .min(8, "Senha atual deve ter pelo menos 8 caracteres"),
+  newPassword: z.string()
+    .min(8, "Nova senha deve ter pelo menos 8 caracteres"),
   confirmPassword: z.string().min(8, "Confirme sua nova senha"),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
 });
 
-type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
+const tokenResetSchema = z.object({
+  newPassword: z.string()
+    .min(8, "Nova senha deve ter pelo menos 8 caracteres"),
+  confirmPassword: z.string().min(8, "Confirme sua nova senha"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
+});
+
+type AuthenticatedResetForm = z.infer<typeof authenticatedResetSchema>;
+type TokenResetForm = z.infer<typeof tokenResetSchema>;
 
 export const ResetPasswordPage = () => {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const authCtx = useAuth();
+  const navigate = useNavigate();
+
+  const isTokenMode = useMemo(() => !!token, [token]);
+  const isAuthenticated = useMemo(() => !!authCtx.token, [authCtx.token]);
+
+  const isValidToken = useMemo(() => {
+    if (!token) return true;
+    try {
+      // Attempt to decode and verify the token structure
+      const decoded = jwtDecode<{ typ: string; jti: string }>(token);
+      return decoded?.typ === "password-reset" && !!decoded?.jti;
+    } catch {
+      return false;
+    }
+  }, [token]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ResetPasswordForm>({
-    resolver: zodResolver(resetPasswordSchema),
+  } = useForm<AuthenticatedResetForm | TokenResetForm>({
+    resolver: zodResolver(isTokenMode ? tokenResetSchema : authenticatedResetSchema),
   });
 
-  const authCtx = useAuth();
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (token) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [token]);
 
-  const onSubmit = async (data: ResetPasswordForm) => {
+  useEffect(() => {
+    if (!token && !authCtx.token) {
+      toast.error("Você precisa estar autenticado ou ter um link válido");
+      navigate("/login");
+    }
+
+    if (token && !isValidToken) {
+      toast.error("Link de redefinição inválido ou expirado");
+      navigate("/login");
+    }
+  }, [token, authCtx.token, navigate, isValidToken]);
+
+  const onSubmit = async (data: any) => {
     try {
-      const userId = jwtDecode<{id: string}>(authCtx.token).id;
-      
-      await toast.promise(
-        UserService.updatePassword(userId, data.currentPassword, data.newPassword),
-        {
-          success: {
-            render: () => {
-              navigate('/dashboard');
-              return "Senha atualizada com sucesso!";
+      if (isTokenMode) {
+        await toast.promise(
+          UserService.confirmPasswordReset(token!, data.newPassword),
+          {
+            success: {
+              render: () => {
+                setTimeout(() => navigate('/login'), 1500);
+                return "Senha redefinida com sucesso! Redirecionando para o login...";
+              },
             },
-          },
-          pending: "Atualizando senha...",
-          error: {
-            render: ({ data }: any) => {
-              const errorMessage = data?.response?.data?.error?.message || "Erro ao atualizar senha";
-              return errorMessage;
+            pending: "Redefinindo senha...",
+            error: {
+              render: ({ data }: any) => {
+                const errorMessage = data?.response?.data?.error?.message || "Token inválido ou expirado";
+                return errorMessage;
+              }
             }
           }
+        );
+      } else {
+        let userId: string;
+        try {
+          const decoded = jwtDecode<{id: string}>(authCtx.token);
+          if (!decoded?.id) {
+            throw new Error("Invalid token format");
+          }
+          userId = decoded.id;
+        } catch (error) {
+          toast.error("Sessão expirada. Por favor, faça login novamente.");
+          navigate("/login");
+          return;
         }
-      );
+
+        await toast.promise(
+          UserService.updatePassword(userId, data.currentPassword, data.newPassword),
+          {
+            success: {
+              render: () => {
+                navigate('/dashboard');
+                return "Senha atualizada com sucesso!";
+              },
+            },
+            pending: "Atualizando senha...",
+            error: {
+              render: ({ data }: any) => {
+                const errorMessage = data?.response?.data?.error?.message || "Erro ao atualizar senha";
+                return errorMessage;
+              }
+            }
+          }
+        );
+      }
     } catch (error) {
       console.error("Password reset error:", error);
     }
@@ -71,43 +150,55 @@ export const ResetPasswordPage = () => {
     },
   };
 
+  if (!token && !isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="w-full min-h-screen bg-zinc-800 flex flex-col items-center p-5 gap-y-6 text-white">
-      <div className="w-full flex justify-start">
-        <button 
-          type="button"
-          className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2" 
-          onClick={() => navigate('/dashboard')}
-        >
-          ← Voltar
-        </button>
-      </div>
-      
+      {!isTokenMode && (
+        <div className="w-full flex justify-start">
+          <button
+            type="button"
+            className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2"
+            onClick={() => navigate('/dashboard')}
+          >
+            ← Voltar
+          </button>
+        </div>
+      )}
+
       <img src={Logo} className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square" />
-      
+
       <h1 className="text-4xl text-center font-extrabold text-cyan-200">
-        Redefinir Senha
+        {isTokenMode ? "Redefinir Senha" : "Alterar Senha"}
       </h1>
-      
+
       <p className="mt-4 text-xl max-w-3xl text-rose-100 text-center">
-        Digite sua senha atual e escolha uma nova senha
+        {isTokenMode
+          ? "Escolha uma nova senha para sua conta"
+          : "Digite sua senha atual e escolha uma nova senha"}
       </p>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="mt-5 w-full max-w-lg bg-zinc-700 p-6 rounded-lg flex flex-col gap-10"
       >
-        <TextField
-          label="Senha Atual"
-          variant="outlined"
-          type="password"
-          placeholder="Digite sua senha atual"
-          sx={inputStyle}
-          slotProps={{ inputLabel: { shrink: true } }}
-          {...register("currentPassword")}
-        />
-        {errors.currentPassword && (
-          <span className="text-red-400">{errors.currentPassword.message}</span>
+        {!isTokenMode && (
+          <>
+            <TextField
+              label="Senha Atual"
+              variant="outlined"
+              type="password"
+              placeholder="Digite sua senha atual"
+              sx={inputStyle}
+              slotProps={{ inputLabel: { shrink: true } }}
+              {...register("currentPassword")}
+            />
+            {(errors as any).currentPassword && (
+              <span className="text-red-400">{(errors as any).currentPassword.message}</span>
+            )}
+          </>
         )}
 
         <TextField
@@ -140,8 +231,18 @@ export const ResetPasswordPage = () => {
           type="submit"
           className="bg-amber-600 text-white py-2 rounded-lg cursor-pointer hover:bg-amber-700"
         >
-          ATUALIZAR SENHA
+          {isTokenMode ? "REDEFINIR SENHA" : "ATUALIZAR SENHA"}
         </button>
+
+        {isTokenMode && (
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="text-cyan-200 text-lg underline hover:text-cyan-300"
+          >
+            Voltar para o login
+          </button>
+        )}
       </form>
     </div>
   );
