@@ -102,8 +102,29 @@ export const WhiteboardPage = () => {
             if (e.key === "Delete") deleteSelected();
         };
 
+        const handlePaste = (e: ClipboardEvent) => {
+            e.preventDefault();
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.type.startsWith("image/")) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        processImages([file]);
+                        toast.success("Imagem colada com sucesso!");
+                    }
+                }
+            }
+        };
+
         window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        window.addEventListener("paste", handlePaste);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("paste", handlePaste);
+        };
     }, [selectedIdx]);
 
     useEffect(() => {
@@ -334,11 +355,29 @@ export const WhiteboardPage = () => {
 
     const handleFinalize = () => {
         const stage = stageRef.current?.getStage();
-        if (stage) {
-            const url = stage.toDataURL({ mimeType: "image/webp", quality: 0.8 });
-            setFinalizedImageUrl(url);
-            setFinalizeModalOpen(true);
+        if (!stage) return;
+
+        // Try different quality levels to stay under 5MB
+        let quality = 0.7;
+        let url = stage.toDataURL({ mimeType: "image/webp", quality });
+        
+        // Estimate base64 size (roughly 4/3 of actual data size)
+        let estimatedSize = (url.length * 3) / 4;
+        
+        // If too large, reduce quality
+        while (estimatedSize > 4.5 * 1024 * 1024 && quality > 0.3) {
+            quality -= 0.1;
+            url = stage.toDataURL({ mimeType: "image/webp", quality });
+            estimatedSize = (url.length * 3) / 4;
         }
+
+        if (estimatedSize > 4.5 * 1024 * 1024) {
+            toast.error("A imagem é muito grande. Tente remover algumas imagens do canvas.");
+            return;
+        }
+
+        setFinalizedImageUrl(url);
+        setFinalizeModalOpen(true);
     };
 
     const handleConfirmFinalize = async () => {
@@ -348,8 +387,14 @@ export const WhiteboardPage = () => {
             toast.success("Montagem salva com sucesso!");
             authCtx.status = true; // Force status to true to ensure user is recognized as having completed the whiteboard step
             navigate("/dashboard");
-        } catch (error) {
-            toast.error("Erro ao salvar a montagem. Por favor, tente novamente.");
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.error?.message || "Erro ao salvar a montagem. Por favor, tente novamente.";
+            
+            if (errorMessage.includes("too large") || errorMessage.includes("Image too large")) {
+                toast.error("A imagem é muito grande. Tente remover algumas imagens do canvas.");
+            } else {
+                toast.error(errorMessage);
+            }
             console.error("Error saving whiteboard:", error);
             return;
         }
