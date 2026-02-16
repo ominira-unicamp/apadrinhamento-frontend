@@ -1,5 +1,5 @@
 import { IconButton, Tooltip, Modal } from "@mui/material";
-import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo } from "@mui/icons-material";
+import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo, ArrowUpward, ArrowDownward, ArrowBack, ArrowForward } from "@mui/icons-material";
 
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
@@ -12,10 +12,14 @@ type ImageData = {
     height?: number;
 };
 
+const CANVAS_WIDTH = 1500;
+const CANVAS_HEIGHT = 800;
+
 export const WhiteboardPage = () => {
     const [images, setImages] = useState<ImageData[]>([]);
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
     const [zoom, setZoom] = useState(1);
+    const [isMobilePanningEnabled, setIsMobilePanningEnabled] = useState(false);
     const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
     const [finalizedImageUrl, setFinalizedImageUrl] = useState<string | null>(null);
     const stageRef = useRef<any>(null);
@@ -93,6 +97,50 @@ export const WhiteboardPage = () => {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [selectedIdx]);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const mediaQuery = window.matchMedia("(pointer: coarse)");
+
+        const updatePanning = () => setIsMobilePanningEnabled(mediaQuery.matches);
+        updatePanning();
+
+        mediaQuery.addEventListener("change", updatePanning);
+        return () => mediaQuery.removeEventListener("change", updatePanning);
+    }, []);
+
+    const clampStagePosition = (position: { x: number; y: number }, scale: number) => {
+        const stage = stageRef.current?.getStage();
+        if (!stage) return position;
+
+        const container = stage.getContainer();
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        const maxX = 0;
+        const minX = containerWidth - CANVAS_WIDTH * scale;
+        const maxY = 0;
+        const minY = containerHeight - CANVAS_HEIGHT * scale;
+
+        return {
+            x: Math.max(Math.min(position.x, maxX), minX),
+            y: Math.max(Math.min(position.y, maxY), minY),
+        };
+    };
+
+    const panStageBy = (deltaX: number, deltaY: number) => {
+        const stage = stageRef.current?.getStage();
+        if (!stage) return;
+
+        const nextPos = {
+            x: stage.x() + deltaX,
+            y: stage.y() + deltaY,
+        };
+
+        const clampedPos = clampStagePosition(nextPos, zoom);
+        stage.position(clampedPos);
+        stage.batchDraw();
+    };
+
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -150,8 +198,8 @@ export const WhiteboardPage = () => {
         const container = stage.getContainer();
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
-        const minZoomX = containerWidth / 1500;
-        const minZoomY = containerHeight / 800;
+        const minZoomX = containerWidth / CANVAS_WIDTH;
+        const minZoomY = containerHeight / CANVAS_HEIGHT;
         const minZoom = Math.max(minZoomX, minZoomY);
 
         const oldScale = zoom;
@@ -173,16 +221,8 @@ export const WhiteboardPage = () => {
             y: pointer.y - mousePointTo.y * clampedScale,
         };
 
-        // Constrain pan - keep canvas visible
-        const maxX = 0;
-        const minX = containerWidth - 1500 * clampedScale;
-        const maxY = 0;
-        const minY = containerHeight - 800 * clampedScale;
-
-        newPos.x = Math.max(Math.min(newPos.x, maxX), minX);
-        newPos.y = Math.max(Math.min(newPos.y, maxY), minY);
-
-        stage.position(newPos);
+        const clampedPos = clampStagePosition(newPos, clampedScale);
+        stage.position(clampedPos);
         stage.scale({ x: clampedScale, y: clampedScale });
     };
 
@@ -258,8 +298,8 @@ export const WhiteboardPage = () => {
         const container = stage.getContainer();
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
-        const minZoomX = containerWidth / 1500;
-        const minZoomY = containerHeight / 800;
+        const minZoomX = containerWidth / CANVAS_WIDTH;
+        const minZoomY = containerHeight / CANVAS_HEIGHT;
         const minZoom = Math.max(minZoomX, minZoomY);
 
         const newScale = Math.max(zoom * 0.8, minZoom);
@@ -271,30 +311,20 @@ export const WhiteboardPage = () => {
             y: containerHeight / 2 - (containerHeight / 2 - stage.y()) / zoom * newScale,
         };
 
-        // Constrain pan
-        const maxX = 0;
-        const minX = containerWidth - 1500 * newScale;
-        const maxY = 0;
-        const minY = containerHeight - 800 * newScale;
-
-        newPos.x = Math.max(Math.min(newPos.x, maxX), minX);
-        newPos.y = Math.max(Math.min(newPos.y, maxY), minY);
-
-        stage.position(newPos);
+        const clampedPos = clampStagePosition(newPos, newScale);
+        stage.position(clampedPos);
         stage.scale({ x: newScale, y: newScale });
     };
 
     const handleZoomReset = () => {
         const stage = stageRef.current?.getStage();
         setZoom(1);
-        stage.position({ x: 0, y: 0 });
+        stage.position(clampStagePosition({ x: 0, y: 0 }, 1));
         stage.scale({ x: 1, y: 1 });
     };
 
     const handleFinalize = () => {
         const stage = stageRef.current?.getStage();
-        console.log(stage);
-        console.log(stageRef.current);
         if (stage) {
             const url = stage.toDataURL();
             setFinalizedImageUrl(url);
@@ -314,13 +344,13 @@ export const WhiteboardPage = () => {
     };
 
     return (
-        <div className="w-full h-full min-h-screen bg-zinc-800 flex flex-col items-center justify-center p-5 gap-y-6 text-white">
-            <h1 className="text-4xl font-bold text-center max-w-xl">
+        <div className="w-full h-full min-h-screen bg-zinc-800 flex flex-col items-center justify-center p-4 md:p-5 gap-y-5 md:gap-y-6 text-white">
+            <h1 className="text-2xl md:text-4xl font-bold text-center max-w-xl">
                 Crie uma montagem que represente você e seus interesses, usando as imagens que desejar!
             </h1>
-            <div className="flex gap-4 w-4/6  h-fit max-h-5/6">
+            <div className="relative flex gap-4 w-full md:w-4/6 h-fit max-h-5/6">
                 {/* Toolbar */}
-                <div className="flex flex-col items-center gap-3 bg-zinc-700 p-3 rounded-lg flex-shrink-0">
+                <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-2 rounded-xl bg-zinc-900/40 p-2 shadow-lg backdrop-blur-md md:static md:gap-3 md:bg-zinc-700 md:p-3 md:rounded-lg md:shadow-none md:backdrop-blur-0 flex-shrink-0">
                     <input
                         type="file"
                         multiple
@@ -451,14 +481,16 @@ export const WhiteboardPage = () => {
                 <div
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
-                    className="flex-1 border-2 border-zinc-600 bg-white rounded-lg overflow-auto"
+                    className="relative flex-1 border-2 border-zinc-600 bg-white rounded-xl md:rounded-lg overflow-hidden md:overflow-auto h-[70vh] sm:h-[75vh] md:h-auto"
                 >
                     <Stage
                         ref={stageRef}
-                        width={1500}
-                        height={800}
+                        width={CANVAS_WIDTH}
+                        height={CANVAS_HEIGHT}
                         onWheel={handleWheel}
                         onClick={handleStageClick}
+                        draggable={isMobilePanningEnabled}
+                        dragBoundFunc={(pos) => clampStagePosition(pos, zoom)}
                     >
                         <Layer>
                             {images.map((item, idx) => (
@@ -498,6 +530,66 @@ export const WhiteboardPage = () => {
                             )}
                         </Layer>
                     </Stage>
+
+                    {isMobilePanningEnabled && (
+                        <div className="absolute right-3 bottom-3 grid grid-cols-3 grid-rows-3 gap-2 md:hidden">
+                            <div />
+                            <IconButton
+                                aria-label="Pan up"
+                                onClick={() => panStageBy(0, 80)}
+                                size="large"
+                                sx={{
+                                    color: "white",
+                                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                                    "&:hover": { backgroundColor: "rgba(15, 23, 42, 0.75)" },
+                                }}
+                            >
+                                <ArrowUpward />
+                            </IconButton>
+                            <div />
+                            <IconButton
+                                aria-label="Pan left"
+                                onClick={() => panStageBy(80, 0)}
+                                size="large"
+                                sx={{
+                                    color: "white",
+                                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                                    "&:hover": { backgroundColor: "rgba(15, 23, 42, 0.75)" },
+                                }}
+                            >
+                                <ArrowBack />
+                            </IconButton>
+                            <div className="flex items-center justify-center">
+                                <div className="h-2 w-2 rounded-full bg-zinc-400" />
+                            </div>
+                            <IconButton
+                                aria-label="Pan right"
+                                onClick={() => panStageBy(-80, 0)}
+                                size="large"
+                                sx={{
+                                    color: "white",
+                                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                                    "&:hover": { backgroundColor: "rgba(15, 23, 42, 0.75)" },
+                                }}
+                            >
+                                <ArrowForward />
+                            </IconButton>
+                            <div />
+                            <IconButton
+                                aria-label="Pan down"
+                                onClick={() => panStageBy(0, -80)}
+                                size="large"
+                                sx={{
+                                    color: "white",
+                                    backgroundColor: "rgba(15, 23, 42, 0.6)",
+                                    "&:hover": { backgroundColor: "rgba(15, 23, 42, 0.75)" },
+                                }}
+                            >
+                                <ArrowDownward />
+                            </IconButton>
+                            <div />
+                        </div>
+                    )}
                 </div>
             </div>
 
