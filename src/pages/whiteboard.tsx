@@ -2,7 +2,13 @@ import { IconButton, Tooltip, Modal } from "@mui/material";
 import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo, ArrowUpward, ArrowDownward, ArrowBack, ArrowForward } from "@mui/icons-material";
 
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
+
+import { useAuth } from "../hooks/useAuth";
+import UserService from "../services/user/UserService";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
 
 type ImageData = {
     image: HTMLImageElement;
@@ -28,6 +34,9 @@ export const WhiteboardPage = () => {
     const historyStepRef = useRef(0);
     const imagesRef = useRef<ImageData[]>([]);
     const historyDirtyRef = useRef(false);
+
+    const authCtx = useAuth();
+    const navigate = useNavigate();
 
     const pushHistory = (nextImages: ImageData[]) => {
         let nextHistory = historyRef.current.slice(0, historyStepRef.current + 1);
@@ -326,15 +335,24 @@ export const WhiteboardPage = () => {
     const handleFinalize = () => {
         const stage = stageRef.current?.getStage();
         if (stage) {
-            const url = stage.toDataURL();
+            const url = stage.toDataURL({ mimeType: "image/webp", quality: 0.8 });
             setFinalizedImageUrl(url);
             setFinalizeModalOpen(true);
         }
     };
 
-    const handleConfirmFinalize = () => {
-        // TODO: Here you can save the image or do whatever you need
-        console.log("Image finalized:", finalizedImageUrl);
+    const handleConfirmFinalize = async () => {
+        const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
+        try {
+            await UserService.update(uid, { whiteboard: finalizedImageUrl! });
+            toast.success("Montagem salva com sucesso!");
+            authCtx.status = true; // Force status to true to ensure user is recognized as having completed the whiteboard step
+            navigate("/dashboard");
+        } catch (error) {
+            toast.error("Erro ao salvar a montagem. Por favor, tente novamente.");
+            console.error("Error saving whiteboard:", error);
+            return;
+        }
         setFinalizeModalOpen(false);
     };
 
@@ -349,6 +367,13 @@ export const WhiteboardPage = () => {
                 Crie uma montagem que represente você e seus interesses, usando as imagens que desejar!
             </h1>
             <div className="relative flex gap-4 w-full md:w-4/6 h-fit max-h-5/6">
+                <button
+                    className="fixed top-4 right-4 bg-amber-600 rounded-lg px-3 text-white font-bold text-xl cursor-pointer z-50"
+                    onClick={() => authCtx.logout().then(() => navigate('/'))}
+                >
+                    Sair
+                </button>
+
                 {/* Toolbar */}
                 <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-3 rounded-2xl bg-zinc-900/45 p-3 shadow-xl backdrop-blur-md md:static flex-shrink-0">
                     <input

@@ -59,6 +59,7 @@ const signupFormSchema = z
         games: z.string().optional(),
         sports: z.string().optional(),
         selectedGodparentsIds: z.array(z.string().uuid()).optional(),
+        whiteboard: z.string().optional(),
         picture: z
             .any()
             .optional()

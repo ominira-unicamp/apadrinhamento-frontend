@@ -47,8 +47,9 @@ export interface IUserGet {
     music?:     string;
     games?:     string;
     sports?:    string;
-    picture:    string;
+    picture?:    string;
     godchildRelation: godparentRelation[];
+    whiteboard?: string;
 }
 
 interface IStatus {
