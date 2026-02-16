@@ -180,12 +180,15 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
     const onSubmit = async (data: any) => {
         if (data.otherEthnicity) {
             data.ethnicity.push(data.otherEthnicity);
+            delete data.otherEthnicity;
         }
         if (data.otherPronouns) {
             data.pronouns.push(data.otherPronouns);
+            delete data.otherPronouns;
         }
         if (data.otherLgbt) {
             data.lgbt.push(data.otherLgbt);
+            delete data.otherLgbt;
         }
 
         if (data.picture.length > 0) {
@@ -203,42 +206,18 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
             try {
                 const {
                     confirmPassword,
-                    otherPronouns,
-                    otherEthnicity,
-                    otherLgbt,
-                    picture,
                     ...signupData
                 } = data;
 
                 const pendingToast = toast.loading("Criando sua conta...");
-                const signupResponse = await authService.signup(signupData);
+                await authService.signup(signupData);
                 toast.dismiss(pendingToast);
-
-                const token = signupResponse.data.access_token;
-                const userId = jwtDecode<{ id: string }>(token).id;
 
                 await authCtx
                     .login({ email: data.email, password: data.password })
                     .catch(console.error);
 
-                if (picture) {
-                    await toast.promise(
-                        UserService.update(userId, { picture } as any),
-                        {
-                            success: {
-                                render: ({ data }) => {
-                                    if ((data as any)?.status == true)
-                                        authCtx.status = true;
-                                    return "Cadastrado com Sucesso";
-                                },
-                            },
-                            pending: "Salvando foto...",
-                            error: "Erro ao salvar foto",
-                        },
-                    );
-                } else {
-                    toast.success("Cadastrado com Sucesso");
-                }
+                toast.success("Conta criada com sucesso!");
 
                 onSignupComplete(signupData.role);
             } catch (error: any) {
