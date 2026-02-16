@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Outlet, Navigate, Route } from "react-router-dom
 import { useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 
-import { SignupPage, LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage, ResetPasswordPage } from "./pages";
+import { SignupPage, LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage, ResetPasswordPage, ForgotPasswordPage } from "./pages";
 
 const PrivateRoutes = () => {
     const auth = useAuth();
@@ -48,12 +48,13 @@ export const AppRoutes = () => {
                         <Route path="/admin/godparenting" element={<GodparentingPage/>}/>
                     </Route>
                     <Route path="/results" element={<ResultPage/>}/>
-                    <Route path="/reset-password" element={<ResetPasswordPage/>}/>
                 </Route>
 
                 <Route path="/" element={<LandPage />}/>
                 <Route path="/login" element={<LoginPage/>}/>
                 <Route path="/signup" element={<SignupPage/>}/>
+                <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+                <Route path="/reset-password" element={<ResetPasswordPage/>}/>
             </Routes>
         </BrowserRouter>
     )

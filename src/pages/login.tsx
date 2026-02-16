@@ -78,13 +78,22 @@ export const LoginPage = () => {
                 <label htmlFor="password" className="text-lg text-white">Senha:</label>
                 <input type="password" className={`w-full border-1 border-${errors.password ? "red" : "gray"}-400 p-4 rounded-lg text-white`} {...register("password", {required: true})}/>
                 <button className="mt-8 bg-amber-600 text-white text-xl font-bold py-2 px-4 rounded-lg cursor-pointer" type="submit">Entrar</button>
-                <button 
-                    type="button"
-                    onClick={() => navigate('/signup')}
-                    className="mt-4 text-cyan-200 text-lg underline hover:text-cyan-300"
-                >
-                    Sem cadastro? Cadastre-se aqui
-                </button>
+                <div className="flex flex-col items-center">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/forgot-password')}
+                        className="mt-2 text-cyan-200 text-lg underline hover:text-cyan-300 cursor-pointer"
+                    >
+                        Esqueceu a senha?
+                    </button>
+                    <button 
+                        type="button"
+                        onClick={() => navigate('/signup')}
+                        className="mt-4 text-cyan-200 text-lg underline hover:text-cyan-300"
+                    >
+                        Sem cadastro? Cadastre-se aqui
+                    </button>    
+                </div>
             </form>
         </div>
     )
