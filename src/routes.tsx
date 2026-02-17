@@ -39,7 +39,6 @@ export const AppRoutes = () => {
         <BrowserRouter>
             <Routes>
                 <Route element={<PrivateRoutes/>}>
-                {/* <Route element={<Outlet/>}> */}
                     <Route path="*" element={<Navigate to='/'/>}/>
                     <Route path="/dashboard" element={<HomePage/>}/>
                     <Route path="/whiteboard" element={<WhiteboardPage/>}/>
@@ -62,6 +61,7 @@ export const AppRoutes = () => {
                 <Route path="/reset-password" element={<ResetPasswordPage/>}/>
                 <Route path="/termos" element={<TermsOfServicePage/>}/>
             </Routes>
+            <TermsOfServiceFooter/>
         </BrowserRouter>
     )
 }
