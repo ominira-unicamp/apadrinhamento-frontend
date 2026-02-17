@@ -49,6 +49,7 @@ export interface IUserGet {
     sports?:    string;
     picture?:    string;
     godchildRelation: godparentRelation[];
+    selectedGodparents?: IUserGet[];
     whiteboard?: string;
 }
 

@@ -19,6 +19,7 @@ export const TinderPage = () => {
     const [selectedGodparent, setSelectedGodparent] = useState<IUserGet | null>(null);
     const [approvedGodparents, setApprovedGodparents] = useState<IUserGet[]>([]);
     const [modalOpen, setModalOpen] = useState(false);
+    const [hasExistingSelection, setHasExistingSelection] = useState(false);
 
     const handleOpenModal = (godparent: IUserGet) => {
         setSelectedGodparent(godparent);
@@ -75,12 +76,36 @@ export const TinderPage = () => {
         }
     }
 
+    const loadPreviousSelections = async () => {
+        try {
+            const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
+            const userData = await UserService.get(uid);
+            
+            if (userData.selectedGodparents && userData.selectedGodparents.length > 0) {
+                setApprovedGodparents(userData.selectedGodparents);
+                setHasExistingSelection(true);
+                toast.info("Seleção anterior carregada. Você pode modificá-la.");
+            }
+        } catch (error) {
+            console.error("Error loading previous selections:", error);
+        }
+    };
+
     useEffect(() => {
         loadGodparents();
+        loadPreviousSelections();
     }, []);
 
     return (
         <div className="w-full h-full flex flex-col items-center gap-3 p-2 pt-5 bg-zinc-800 overflow-y-scroll pb-20">
+            {hasExistingSelection && (
+                <button
+                    className="fixed top-4 left-4 bg-blue-600 rounded-lg px-3 text-white font-bold text-xl cursor-pointer z-50"
+                    onClick={() => navigate('/dashboard')}
+                >
+                    ← Voltar
+                </button>
+            )}
             <div className="grid w-full max-w-4xl grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-3">
                 {godparents.map(godparent => (
                     <div key={godparent.id}>

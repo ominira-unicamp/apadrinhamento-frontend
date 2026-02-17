@@ -11,19 +11,21 @@ export const HomePage = () => {
     const authCtx = useAuth();
     const navigate = useNavigate();
     const [hasWhiteboard, setHasWhiteboard] = useState(false);
+    const [hasSelectedGodparents, setHasSelectedGodparents] = useState(false);
 
     useEffect(() => {
-        const checkWhiteboard = async () => {
+        const checkUserData = async () => {
             try {
                 const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
                 const userData = await UserService.get(uid);
                 setHasWhiteboard(!!userData.whiteboard);
+                setHasSelectedGodparents(!!(userData.selectedGodparents && userData.selectedGodparents.length > 0));
             } catch (error) {
-                console.error("Error checking whiteboard:", error);
+                console.error("Error checking user data:", error);
             }
         };
 
-        checkWhiteboard();
+        checkUserData();
     }, [authCtx.token]);
 
 
@@ -34,6 +36,9 @@ export const HomePage = () => {
                     <button className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer" onClick={() => navigate('/signup', { state: { edit: true } }) }>Editar Respostas</button>
                     {hasWhiteboard && (
                         <button className="bg-cyan-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer" onClick={() => navigate('/whiteboard') }>Ver/Editar Montagem</button>
+                    )}
+                    {authCtx.role === 'bixe' && hasSelectedGodparents && (
+                        <button className="bg-purple-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer" onClick={() => navigate('/tinder') }>Ver/Editar Padrinhes</button>
                     )}
                 </div>
                 <button className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer mr-2" onClick={() => authCtx.logout() }>Sair</button>
