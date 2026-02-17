@@ -243,7 +243,6 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
                     success: {
                         render: ({ data }) => {
                             if (data.status == true) authCtx.status = true;
-                            navigate("/dashboard");
                             return "Atualizado com Sucesso";
                         },
                     },
