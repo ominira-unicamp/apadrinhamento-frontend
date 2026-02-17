@@ -34,11 +34,13 @@ export const LoginPage = () => {
         const pendingToast = toast.loading("Carregando...");
 
         try {
-            await authCtx.login(data);
+            const finished = await authCtx.login(data);
             toast.dismiss(pendingToast);
             
             if (authCtx.role === "ADMIN") {
                 navigate("/admin");
+            } else if (!finished) {
+                navigate("/signup");
             } else {
                 navigate("/dashboard");
             }
@@ -89,7 +91,7 @@ export const LoginPage = () => {
                     <button 
                         type="button"
                         onClick={() => navigate('/signup')}
-                        className="mt-4 text-cyan-200 text-lg underline hover:text-cyan-300"
+                        className="mt-4 text-cyan-200 text-lg underline hover:text-cyan-300 cursor-pointer"
                     >
                         Sem cadastro? Cadastre-se aqui
                     </button>    

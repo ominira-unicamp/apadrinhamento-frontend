@@ -36,8 +36,7 @@ export interface IUserGet {
     course:     Course;
     telephone?: string;
     yearOfEntry?: number;
-    approved?:  boolean;
-    rejected?:  boolean;
+    approvalStatus: ApprovalStatus;
     createdAt?: string;
     pronouns:   string[];
     ethnicity:  string[];
@@ -48,8 +47,10 @@ export interface IUserGet {
     music?:     string;
     games?:     string;
     sports?:    string;
-    picture:    string;
+    picture?:    string;
     godchildRelation: godparentRelation[];
+    selectedGodparents?: IUserGet[];
+    whiteboard?: string;
 }
 
 interface IStatus {
@@ -65,7 +66,7 @@ interface godparentRelation {
 }
 
 
-async function update(userId: string, data: formType): Promise<IUser> {
+async function update(userId: string, data: Partial<formType>): Promise<IUser> {
 
     const response = await Api().put(`/users/${userId}`, data);
     return response.data;
@@ -100,6 +101,11 @@ async function getStats(): Promise<IStatus> {
     return response.data;
 }
 
+async function getGodparents(): Promise<IUserGet[]> {
+    const response = await Api().get(`/users/godparents`);
+    return response.data;
+}
+
 async function addGodparentRelations(data: string): Promise<void> {
     await Api().post(`/users/addGodparentRelations`, data);
 }
@@ -127,4 +133,4 @@ async function confirmPasswordReset(token: string, newPassword: string): Promise
     await Api().post(`/users/resetPassword/confirm`, { token, newPassword });
 }
 
-export default { update, get, getPendingApprovals, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations, runMatching, updatePassword, resetPassword, confirmPasswordReset };
+export default { update, get, getPendingApprovals, getGodparents, approveUser, unapproveUser, getAllUsers, getStats, getToMatch, addGodparentRelations, runMatching, updatePassword, resetPassword, confirmPasswordReset };

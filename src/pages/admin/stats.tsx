@@ -49,11 +49,11 @@ export const StatsPage = () => {
                     {status && status?.bixes + status?.vets}
                 </div>
                 <div className="flex flex-col flex-1/3 items-center gap-2 bg-zinc-700 rounded-lg p-4">
-                    <h1>Veteranos Aprovados: </h1>  
+                    <h1>Veteranes Aprovades: </h1>  
                     {status?.approved}
                 </div>
                 <div className="flex flex-col flex-1/3 items-center gap-2 bg-zinc-700 rounded-lg p-4">
-                    <h1>Veteranos Pendentes: </h1>  
+                    <h1>Veteranes Pendentes: </h1>  
                     {status && status?.vets - status?.approved}
                 </div>
                 <div className="flex flex-col flex-1/4 items-center gap-2 bg-zinc-700 rounded-lg p-4">

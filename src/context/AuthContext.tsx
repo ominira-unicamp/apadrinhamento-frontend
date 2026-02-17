@@ -28,7 +28,7 @@ interface IUserContextData extends IUserData{
 
 const getInitialState = (): IUserData => {
     const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : { name: '', token: '' };
+    return user ? JSON.parse(user) : { name: '', token: '', role: '', status: false };
 }
 export const AuthContext = createContext<IUserContextData>({} as IUserContextData);
 
@@ -62,11 +62,18 @@ export const AuthContextProvider: React.FC<React.PropsWithChildren<object>> = ({
         try {
             await authService.logout();
         } catch (error: unknown) {
+            if (error instanceof AxiosError) {
+                if (error.response?.status === 401) {
+                    setUser({} as IUserData);
+                    return;
+                }
+            }
             console.error('Failed logout Attempt: ', error);
             throw error;
+        } finally {
+            setUser({} as IUserData);
         }
 
-        setUser({} as IUserData);
     };
 
     const verify = async (): Promise<void> => {

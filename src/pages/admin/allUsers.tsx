@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import Logo from "../../assets/logo.png";
-import UserService, { IUserGet } from "../../services/user/UserService";
+import UserService, { ApprovalStatus, IUserGet } from "../../services/user/UserService";
 import { useAuth } from "../../hooks/useAuth";
 
 export const AllUsersPage = () => {
@@ -11,7 +11,9 @@ export const AllUsersPage = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<IUserGet[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<"all" | "approved" | "pending" | "rejected" | "bixes">("all");
+    const [filter, setFilter] = useState<
+        "all" | "approved" | "pending" | "rejected" | "bixes"
+    >("all");
 
     useEffect(() => {
         loadUsers();
@@ -60,27 +62,30 @@ export const AllUsersPage = () => {
         }
     };
 
-    const filteredUsers = users.filter(user => {
-        if (filter === "approved") return user.approved && user.role === "veterane";
-        if (filter === "pending") return !user.approved && !user.rejected && user.role === "veterane";
-        if (filter === "rejected") return user.rejected && user.role === "veterane";
+    const filteredUsers = users.filter((user) => {
+        if (filter === "approved")
+            return user.approvalStatus === ApprovalStatus.APPROVED && user.role === "veterane";
+        if (filter === "pending")
+            return user.approvalStatus === ApprovalStatus.PENDING && user.role === "veterane";
+        if (filter === "rejected")
+            return user.approvalStatus === ApprovalStatus.REJECTED && user.role === "veterane";
         if (filter === "bixes") return user.role === "bixe";
         return true;
     });
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+        return new Date(dateString).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
         });
     };
 
     const formatTelephone = (telephone?: string) => {
         if (!telephone) return "Não informado";
-        const digits = telephone.replace(/\D/g, '');
+        const digits = telephone.replace(/\D/g, "");
         if (digits.length === 11) {
             return `(${digits.slice(0, 2)})${digits.slice(2, 3)}${digits.slice(3, 7)}-${digits.slice(7)}`;
         }
@@ -90,22 +95,25 @@ export const AllUsersPage = () => {
     return (
         <div className="w-full h-full flex flex-col items-center gap-9 p-2 pt-8 bg-zinc-800 overflow-y-scroll">
             <div className="flex w-full justify-between">
-                <button 
-                    className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2" 
-                    onClick={() => navigate('/admin')}
+                <button
+                    className="bg-blue-900 rounded-lg px-3 text-white font-bold text-xl cursor-pointer ml-2"
+                    onClick={() => navigate("/admin")}
                 >
                     ← Admin
                 </button>
-                <button 
-                    className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer mr-2" 
+                <button
+                    className="bg-amber-600 rounded-lg px-3 text-white font-bold text-xl self-end cursor-pointer mr-2"
                     onClick={() => authCtx.logout()}
                 >
                     Sair
                 </button>
             </div>
 
-            <img src={Logo} className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square" />
-            
+            <img
+                src={Logo}
+                className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square"
+            />
+
             <h1 className="text-4xl text-center font-extrabold text-cyan-200">
                 Todos os Usuários
             </h1>
@@ -113,9 +121,9 @@ export const AllUsersPage = () => {
             <div className="flex gap-4 mb-4">
                 <button
                     onClick={() => setFilter("all")}
-                    className={`px-4 py-2 rounded-lg font-bold ${
-                        filter === "all" 
-                            ? "bg-cyan-600 text-white" 
+                    className={`px-4 py-2 rounded-lg font-bold cursor-pointer ${
+                        filter === "all"
+                            ? "bg-cyan-600 text-white"
                             : "bg-zinc-700 text-white hover:bg-zinc-600"
                     }`}
                 >
@@ -123,43 +131,61 @@ export const AllUsersPage = () => {
                 </button>
                 <button
                     onClick={() => setFilter("approved")}
-                    className={`px-4 py-2 rounded-lg font-bold ${
-                        filter === "approved" 
-                            ? "bg-green-600 text-white" 
+                    className={`px-4 py-2 rounded-lg font-bold cursor-pointer ${
+                        filter === "approved"
+                            ? "bg-green-600 text-white"
                             : "bg-zinc-700 text-white hover:bg-zinc-600"
                     }`}
                 >
-                    Aprovados ({users.filter(u => u.approved && u.role === "veterane").length})
+                    Aprovados (
+                    {
+                        users.filter((u) => u.approvalStatus === ApprovalStatus.APPROVED && u.role === "veterane")
+                            .length
+                    }
+                    )
                 </button>
                 <button
                     onClick={() => setFilter("pending")}
-                    className={`px-4 py-2 rounded-lg font-bold ${
-                        filter === "pending" 
-                            ? "bg-orange-600 text-white" 
+                    className={`px-4 py-2 rounded-lg font-bold cursor-pointer ${
+                        filter === "pending"
+                            ? "bg-orange-600 text-white"
                             : "bg-zinc-700 text-white hover:bg-zinc-600"
                     }`}
                 >
-                    Pendentes ({users.filter(u => !u.approved && !u.rejected && u.role === "veterane").length})
+                    Pendentes (
+                    {
+                        users.filter(
+                            (u) =>
+                                u.approvalStatus === ApprovalStatus.PENDING &&
+                                u.role === "veterane",
+                        ).length
+                    }
+                    )
                 </button>
                 <button
                     onClick={() => setFilter("rejected")}
-                    className={`px-4 py-2 rounded-lg font-bold ${
-                        filter === "rejected" 
-                            ? "bg-red-600 text-white" 
+                    className={`px-4 py-2 rounded-lg font-bold cursor-pointer ${
+                        filter === "rejected"
+                            ? "bg-red-600 text-white"
                             : "bg-zinc-700 text-white hover:bg-zinc-600"
                     }`}
                 >
-                    Rejeitados ({users.filter(u => u.rejected && u.role === "veterane").length})
+                    Rejeitados (
+                    {
+                        users.filter((u) => u.approvalStatus === ApprovalStatus.REJECTED && u.role === "veterane")
+                            .length
+                    }
+                    )
                 </button>
                 <button
                     onClick={() => setFilter("bixes")}
-                    className={`px-4 py-2 rounded-lg font-bold ${
-                        filter === "bixes" 
-                            ? "bg-blue-600 text-white" 
+                    className={`px-4 py-2 rounded-lg font-bold cursor-pointer ${
+                        filter === "bixes"
+                            ? "bg-blue-600 text-white"
                             : "bg-zinc-700 text-white hover:bg-zinc-600"
                     }`}
                 >
-                    Bixes ({users.filter(u => u.role === "bixe").length})
+                    Bixes ({users.filter((u) => u.role === "bixe").length})
                 </button>
             </div>
 
@@ -169,57 +195,106 @@ export const AllUsersPage = () => {
                 <div className="w-full max-w-6xl px-4">
                     <div className="grid gap-4">
                         {filteredUsers.map((user) => (
-                            <div 
+                            <div
                                 key={user.id}
                                 className="bg-zinc-700 rounded-lg p-6 text-white"
                             >
                                 <div className="flex justify-between items-start">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <h2 className="text-xl font-bold">{user.name}</h2>
-                                            <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                                                user.role === "bixe" 
-                                                    ? "bg-blue-600" 
-                                                    : user.rejected
-                                                        ? "bg-red-600"
-                                                        : user.approved 
-                                                            ? "bg-green-600" 
+                                            <h2 className="text-xl font-bold">
+                                                {user.name}
+                                            </h2>
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                                    user.role === "bixe"
+                                                        ? "bg-blue-600"
+                                                        : user.approvalStatus === ApprovalStatus.REJECTED
+                                                          ? "bg-red-600"
+                                                          : user.approvalStatus === ApprovalStatus.APPROVED
+                                                            ? "bg-green-600"
                                                             : "bg-orange-600"
-                                            }`}>
-                                                {user.role === "bixe" 
-                                                    ? "Bixe" 
-                                                    : user.rejected
-                                                        ? "Veterane Rejeitado"
-                                                        : user.approved 
-                                                            ? "Veterane Aprovado" 
-                                                            : "Veterane Pendente"}
+                                                }`}
+                                            >
+                                                {user.role === "bixe"
+                                                    ? "Bixe"
+                                                    : user.approvalStatus === ApprovalStatus.REJECTED
+                                                      ? "Veterane Rejeitado"
+                                                      : user.approvalStatus === ApprovalStatus.APPROVED
+                                                        ? "Veterane Aprovado"
+                                                        : "Veterane Pendente"}
                                             </span>
                                         </div>
-                                        
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                                            <p><span className="text-cyan-400">Email:</span> {user.email}</p>
-                                            <p><span className="text-cyan-400">Curso:</span> {user.course}</p>
-                                            <p><span className="text-cyan-400">Telefone:</span> {formatTelephone(user.telephone)}</p>
-                                            <p><span className="text-cyan-400">Ano de Ingresso:</span> {user.yearOfEntry || "Não informado"}</p>
-                                            <p><span className="text-cyan-400">Cadastrado em:</span> {user.createdAt ? formatDate(user.createdAt) : "Não disponível"}</p>
-                                            <p><span className="text-cyan-400">Perfil Completo:</span> {user.status ? "Sim" : "Não"}</p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Email:
+                                                </span>{" "}
+                                                {user.email}
+                                            </p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Curso:
+                                                </span>{" "}
+                                                {user.course}
+                                            </p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Telefone:
+                                                </span>{" "}
+                                                {formatTelephone(
+                                                    user.telephone,
+                                                )}
+                                            </p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Ano de Ingresso:
+                                                </span>{" "}
+                                                {user.yearOfEntry ||
+                                                    "Não informado"}
+                                            </p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Cadastrado em:
+                                                </span>{" "}
+                                                {user.createdAt
+                                                    ? formatDate(user.createdAt)
+                                                    : "Não disponível"}
+                                            </p>
+                                            <p>
+                                                <span className="text-cyan-400">
+                                                    Perfil Completo:
+                                                </span>{" "}
+                                                {user.status ? "Sim" : "Não"}
+                                            </p>
                                         </div>
                                     </div>
 
                                     {user.role === "veterane" && (
                                         <>
-                                            {user.approved && (
+                                            {user.approvalStatus === ApprovalStatus.APPROVED && (
                                                 <button
-                                                    onClick={() => handleUnapprove(user.id, user.name)}
-                                                    className="ml-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                                    onClick={() =>
+                                                        handleUnapprove(
+                                                            user.id,
+                                                            user.name,
+                                                        )
+                                                    }
+                                                    className="ml-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors cursor-pointer"
                                                 >
                                                     Rejeitar
                                                 </button>
                                             )}
-                                            {user.rejected && (
+                                            {user.approvalStatus === ApprovalStatus.REJECTED && (
                                                 <button
-                                                    onClick={() => handleApprove(user.id, user.name)}
-                                                    className="ml-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                                                    onClick={() =>
+                                                        handleApprove(
+                                                            user.id,
+                                                            user.name,
+                                                        )
+                                                    }
+                                                    className="ml-4 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition-colors cursor-pointer"
                                                 >
                                                     Aprovar
                                                 </button>
