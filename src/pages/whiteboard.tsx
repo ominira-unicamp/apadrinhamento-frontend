@@ -67,6 +67,7 @@ export const WhiteboardPage = () => {
                         }]);
                         toast.info("Whiteboard anterior carregado. Você pode editá-lo ou criar um novo.");
                     };
+                    img.crossOrigin = "Anonymous";
                     img.src = userData.whiteboard;
                 }
             } catch (error) {
@@ -443,7 +444,7 @@ export const WhiteboardPage = () => {
 
     return (
         <div className="w-full h-full min-h-screen bg-zinc-800 flex flex-col items-center justify-center p-4 md:p-5 gap-y-5 md:gap-y-6 text-white">
-            <h1 className="text-2xl md:text-4xl font-bold text-center max-w-xl">
+            <h1 className="text-xl md:text-2xl font-bold text-center max-w-xl">
                 Crie uma montagem que represente você e seus interesses, usando as imagens que desejar!
             </h1>
             <div className="relative flex gap-4 w-full md:w-4/6 h-fit max-h-5/6">
@@ -463,7 +464,7 @@ export const WhiteboardPage = () => {
                 </button>
 
                 {/* Toolbar */}
-                <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-3 rounded-2xl bg-zinc-900/45 p-3 shadow-xl backdrop-blur-md md:static flex-shrink-0">
+                <div className="absolute left-3 top-3 z-10 flex flex-col items-center gap-3 rounded-2xl bg-zinc-900/45 p-3 shadow-xl backdrop-blur-md md:static flex-shrink-0 overflow-y-scroll">
                     <input
                         type="file"
                         multiple
@@ -634,6 +635,10 @@ export const WhiteboardPage = () => {
                                     image={item.image}
                                     draggable
                                     onClick={(e) => {
+                                        e.cancelBubble = true;
+                                        handleSelectImage(idx);
+                                    }}
+                                    onDblTap={(e) => {
                                         e.cancelBubble = true;
                                         handleSelectImage(idx);
                                     }}
