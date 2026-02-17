@@ -46,7 +46,7 @@ export const HomePage = () => {
             <img src={Logo} className="w-full lg:w-1/6 md:w-1/4 h-fit aspect-square" />
             <h1 className="text-4xl text-center font-extrabold text-cyan-200">Obrigado por Participar!</h1>
             <p className="mt-8 text-xl max-w-3xl text-white text-center">Fique antenade em <a href="https://www.instagram.com/ctcomp026/" target="_blank" className="text-amber-600">nosso instagram</a>, para quando sair o resultado!</p>
-            <button className="mt-8 bg-amber-600 text-white text-xl font-bold py-2 px-4 rounded-lg not-disabled:cursor-pointer disabled:bg-gray-500" onClick={() => navigate('/results') }>RESULTADO</button>
+            <button disabled className="mt-8 bg-amber-600 text-white text-xl font-bold py-2 px-4 rounded-lg not-disabled:cursor-pointer disabled:bg-gray-500" onClick={() => navigate('/results') }>RESULTADO</button>
             
             {authCtx.role === "ADMIN" && (
                 <button 

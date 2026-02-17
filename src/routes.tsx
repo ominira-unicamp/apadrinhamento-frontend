@@ -51,7 +51,7 @@ export const AppRoutes = () => {
                         <Route path="/admin/stats" element={<StatsPage/>}/>
                         <Route path="/admin/godparenting" element={<GodparentingPage/>}/>
                     </Route>
-                    <Route path="/results" element={<ResultPage/>}/>
+                    {/* <Route path="/results" element={<ResultPage/>}/> */}
                     <Route path="/logout" element={<LogoutPage/>}/>
                 </Route>
 
