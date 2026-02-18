@@ -210,19 +210,6 @@ export const TinderPage = () => {
                                 </div>
                             )}
 
-                            {selectedGodparent.lgbt && selectedGodparent.lgbt.length > 0 && (
-                                <div>
-                                    <Typography variant="h6" sx={{ color: 'white', mb: 1 }}>
-                                        LGBTQIAPN+
-                                    </Typography>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedGodparent.lgbt.map((item, index) => (
-                                            <Chip key={index} label={item} sx={{ backgroundColor: '#3f3f46', color: 'white' }} />
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             <Divider sx={{ backgroundColor: '#52525b', width: '100%' }} />
 
                             <div>
