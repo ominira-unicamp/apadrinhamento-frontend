@@ -33,7 +33,6 @@ const signupFormSchema = z
         confirmPassword: z.string().min(8, "Confirme sua senha"),
         name: z.string().min(1, "Nome é obrigatório"),
         telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
-        course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
         role: z.enum(["bixe", "veterane"], {
             required_error: "Selecione uma opção",
         }),
@@ -59,8 +58,6 @@ const signupFormSchema = z
         music: z.string().optional(),
         games: z.string().optional(),
         sports: z.string().optional(),
-        selectedGodparentsIds: z.array(z.string().uuid()).optional(),
-        whiteboard: z.string().optional(),
         picture: z
             .any()
             .optional()
@@ -84,7 +81,6 @@ const signupFormSchema = z
 const editFormSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório"),
     telephone: z.string().regex(/^\d{11}$/, "Telefone para contato"),
-    course: z.enum(["CC", "EC"], { required_error: "Selecione seu curso" }),
     role: z.enum(["bixe", "veterane"], {
         required_error: "Selecione uma opção",
     }),
@@ -254,7 +250,6 @@ export const SignupForm = () => {
     };
 
     const role = watch("role");
-    const course = watch("course");
 
     const inputStyle = {
         input: { color: "white" },
@@ -282,10 +277,6 @@ export const SignupForm = () => {
             UserService.get(jwtDecode<{ id: string }>(authCtx.token).id).then(
                 async (response) => {
                     setValue("name", response.name, {
-                        shouldValidate: false,
-                        shouldDirty: false,
-                    });
-                    setValue("course", response.course, {
                         shouldValidate: false,
                         shouldDirty: false,
                     });
@@ -599,48 +590,7 @@ export const SignupForm = () => {
                             </span>
                         )}
                     </>
-                )}
-
-                <div className="flex flex-col gap-2">
-                    <p>Qual curso você se matriculou?</p>
-                    <div className="text-black flex justify-evenly">
-                        <button
-                            type="button"
-                            className={`cursor-pointer w-1/3 px-3 py-1 rounded-full ${
-                                course == "CC" ? "bg-cyan-200" : "bg-white"
-                            }`}
-                            onClick={() =>
-                                setValue("course", "CC", {
-                                    shouldDirty: false,
-                                    shouldValidate: false,
-                                    shouldTouch: false,
-                                })
-                            }
-                        >
-                            CC
-                        </button>
-                        <button
-                            type="button"
-                            className={`cursor-pointer w-1/3 px-3 py-1 rounded-full ${
-                                course == "EC" ? "bg-cyan-200" : "bg-white"
-                            }`}
-                            onClick={() =>
-                                setValue("course", "EC", {
-                                    shouldDirty: false,
-                                    shouldValidate: false,
-                                    shouldTouch: false,
-                                })
-                            }
-                        >
-                            EC
-                        </button>
-                    </div>
-                    {errors.course && (
-                        <span className="text-red-400">
-                            {errors.course.message}
-                        </span>
-                    )}
-                </div>
+                )}  
 
                 <div className="flex flex-col gap-2">
                     <p>Ano de Ingresso</p>
