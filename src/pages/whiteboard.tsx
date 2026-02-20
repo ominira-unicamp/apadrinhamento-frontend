@@ -1,4 +1,4 @@
-import { IconButton, Tooltip, Modal } from "@mui/material";
+import { IconButton, Tooltip, Modal, Box } from "@mui/material";
 import { CloudUpload, Delete, ZoomIn, ZoomOut, Home, CheckCircle, Undo, Redo, ArrowUpward, ArrowDownward, ArrowBack, ArrowForward, DeleteSweep } from "@mui/icons-material";
 
 import { useState, useRef, useEffect } from "react";
@@ -40,6 +40,11 @@ export const WhiteboardPage = () => {
 
     const authCtx = useAuth();
     const navigate = useNavigate();
+
+    // Debug modal state
+    useEffect(() => {
+        console.log("Modal state changed:", finalizeModalOpen);
+    }, [finalizeModalOpen]);
 
     // Load existing whiteboard on mount
     useEffect(() => {
@@ -198,8 +203,10 @@ export const WhiteboardPage = () => {
             const stage = stageRef.current?.getStage();
             if (stage) {
                 const url = stage.toDataURL({ mimeType: "image/webp", quality: 0.8 });
+                console.log("Setting finalized image URL:", url ? "Generated" : "Failed");
                 setFinalizedImageUrl(url);
                 setFinalizeModalOpen(true);
+                console.log("Modal should be opening now");
             }
         }
     }, [selectedIdx]);
@@ -420,20 +427,40 @@ export const WhiteboardPage = () => {
     };
 
     const handleFinalize = () => {
-        finalizeRef.current = true;
-        setSelectedIdx(null);
+        console.log("Finalize button clicked, selectedIdx:", selectedIdx);
+        
+        // If nothing is selected, generate the preview immediately
+        if (selectedIdx === null) {
+            const stage = stageRef.current?.getStage();
+            if (stage) {
+                const url = stage.toDataURL({ mimeType: "image/webp", quality: 0.8 });
+                console.log("Setting finalized image URL:", url ? "Generated" : "Failed");
+                setFinalizedImageUrl(url);
+                setFinalizeModalOpen(true);
+                console.log("Modal opened directly");
+            }
+        } else {
+            // If something is selected, deselect it first and let the useEffect handle it
+            finalizeRef.current = true;
+            setSelectedIdx(null);
+        }
     };
 
     const handleConfirmFinalize = async () => {
         const uid = jwtDecode<{ id: string }>(authCtx.token!).id;
         try {
+            console.log("Attempting to save whiteboard...");
             await UserService.update(uid, { whiteboard: finalizedImageUrl! });
+            console.log("Whiteboard saved successfully");
             toast.success("Montagem salva com sucesso! Você pode continuar editando ou voltar ao painel.");
-            authCtx.status = true; // Force status to true to ensure user is recognized as having completed the whiteboard step
             setFinalizeModalOpen(false);
         } catch (error) {
-            toast.error("Erro ao salvar a montagem. Por favor, tente novamente.");
-            console.error("Error saving whiteboard:", error);
+            console.error("Full error saving whiteboard:", error);
+            if (error instanceof Error) {
+                toast.error(`Erro ao salvar: ${error.message}`);
+            } else {
+                toast.error("Erro ao salvar a montagem. Por favor, tente novamente.");
+            }
             return;
         }
     };
@@ -741,14 +768,38 @@ export const WhiteboardPage = () => {
             <Modal
                 open={finalizeModalOpen}
                 onClose={handleCloseFinalizeModal}
+                slotProps={{
+                    backdrop: {
+                        sx: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        }
+                    }
+                }}
                 sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: 'rgba(128, 128, 128, 0.2)',
                 }}
             >
-                <div className="bg-zinc-800 rounded-xl p-8 w-[90vw] max-h-[90vh] max-w-2xl flex flex-col shadow-2xl outline-none overflow-y-auto">
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '90vw',
+                        maxWidth: '672px',
+                        maxHeight: '90vh',
+                        bgcolor: '#27272a',
+                        borderRadius: '12px',
+                        boxShadow: 24,
+                        p: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        outline: 'none',
+                        overflowY: 'auto',
+                    }}
+                >
                     <h2 className="text-white text-2xl font-bold mb-4">Preview da Montagem</h2>
                     {finalizedImageUrl && (
                         <img
@@ -781,7 +832,7 @@ export const WhiteboardPage = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </Box>
             </Modal>
         </div>
     );
