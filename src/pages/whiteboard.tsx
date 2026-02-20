@@ -36,7 +36,6 @@ export const WhiteboardPage = () => {
     const historyStepRef = useRef(0);
     const imagesRef = useRef<ImageData[]>([]);
     const historyDirtyRef = useRef(false);
-    const finalizeRef = useRef(false);
 
     const authCtx = useAuth();
     const navigate = useNavigate();
@@ -191,18 +190,6 @@ export const WhiteboardPage = () => {
         mediaQuery.addEventListener("change", updatePanning);
         return () => mediaQuery.removeEventListener("change", updatePanning);
     }, []);
-
-    useEffect(() => {
-        if (finalizeRef.current && selectedIdx === null) {
-            finalizeRef.current = false;
-            const stage = stageRef.current?.getStage();
-            if (stage) {
-                const url = stage.toDataURL({ mimeType: "image/webp", quality: 0.8 });
-                setFinalizedImageUrl(url);
-                setFinalizeModalOpen(true);
-            }
-        }
-    }, [selectedIdx]);
 
     const clampStagePosition = (position: { x: number; y: number }, scale: number) => {
         const stage = stageRef.current?.getStage();
@@ -420,8 +407,14 @@ export const WhiteboardPage = () => {
     };
 
     const handleFinalize = () => {
-        finalizeRef.current = true;
-        setSelectedIdx(null);
+        const stage = stageRef.current?.getStage();
+        if (stage) {
+            // Export only the image layer (index 0), transformer layer (index 1) is ignored
+            const imageLayer = stage.getLayers()[0];
+            const url = imageLayer.toDataURL({ mimeType: "image/webp", quality: 0.8 });
+            setFinalizedImageUrl(url);
+            setFinalizeModalOpen(true);
+        }
     };
 
     const handleConfirmFinalize = async () => {
@@ -664,6 +657,8 @@ export const WhiteboardPage = () => {
                                     }}
                                 />
                             ))}
+                        </Layer>
+                        <Layer>
                             {selectedIdx !== null && (
                                 <Transformer
                                     ref={transformerRef}
