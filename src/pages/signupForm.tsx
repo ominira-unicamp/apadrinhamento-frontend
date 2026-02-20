@@ -436,7 +436,7 @@ export const SignupForm = () => {
                 className="w-1/2 lg:w-1/6 md:w-1/4 h-fit aspect-square"
             />
             <h1 className="text-4xl text-center font-extrabold text-cyan-200">
-                Bem-vinde ao Sistema de Apadrinhamento da Engenharia Civil
+                Bem-vinde ao Sistema de Apadrinhamento da Geografia
             </h1>
             <p className="mt-8 text-xl max-w-3xl text-rose-100 text-center">
                 Preencha com sinceridade. Utilizaremos esses dados para
