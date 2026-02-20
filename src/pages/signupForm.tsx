@@ -24,6 +24,7 @@ const signupFormSchema = z
     .object({
         email: z
             .string()
+            .trim()
             .regex(
                 /^[a-zA-Z][0-9]{6}@dac.unicamp.br$/,
                 "Use seu email institucional da UNICAMP",
@@ -178,6 +179,10 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
     };
 
     const onSubmit = async (data: any) => {
+        if (data.email) {
+            data.email = data.email.trim();
+        }
+
         if (data.otherEthnicity) {
             data.ethnicity.push(data.otherEthnicity);
             delete data.otherEthnicity;
@@ -455,6 +460,7 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 className="mt-5 w-full max-w-lg bg-zinc-700 p-6 rounded-lg flex flex-col gap-10"
+                noValidate
             >
                 {!state?.edit && (
                     <>
