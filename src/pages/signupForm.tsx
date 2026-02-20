@@ -133,11 +133,7 @@ interface citiesData {
     nome: string;
 }
 
-interface SignupFormProps {
-    onSignupComplete: (role: "bixe" | "veterane") => void;
-}
-
-export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
+export const SignupForm = () => {
     const authCtx = useAuth();
     const navigate = useNavigate();
     const { state } = useLocation();
@@ -232,7 +228,6 @@ export const SignupForm = ({ onSignupComplete }: SignupFormProps) => {
                     .catch(console.error);
 
 
-                onSignupComplete(signupData.role);
             } catch (error: any) {
                 console.error("Signup error details:", error);
                 return;

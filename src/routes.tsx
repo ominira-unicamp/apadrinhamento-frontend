@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Outlet, Navigate, Route } from "react-router-dom
 import { useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 
-import { SignupPage, LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage, ResetPasswordPage, ForgotPasswordPage, WhiteboardPage, TinderPage, LogoutPage, TermsOfServicePage } from "./pages";
+import { LoginPage, LandPage, HomePage, ApprovalPage, StatsPage, GodparentingPage, ResultPage, AdminDashboardPage, AllUsersPage, ResetPasswordPage, ForgotPasswordPage, LogoutPage, TermsOfServicePage, SignupForm } from "./pages";
 import { TermsOfServiceFooter } from "./components";
 
 
@@ -43,8 +43,6 @@ export const AppRoutes = () => {
                     <Route element={<PrivateRoutes/>}>
                         <Route path="*" element={<Navigate to='/'/>}/>
                         <Route path="/dashboard" element={<HomePage/>}/>
-                        <Route path="/whiteboard" element={<WhiteboardPage/>}/>
-                        <Route path="/tinder" element={<TinderPage/>}/>
                         <Route element={<AdminRoutes/>}>
                             <Route path="/admin" element={<AdminDashboardPage/>}/>
                             <Route path="/admin/approval" element={<ApprovalPage/>}/>
@@ -58,7 +56,7 @@ export const AppRoutes = () => {
 
                     <Route path="/" element={<LandPage />}/>
                     <Route path="/login" element={<LoginPage/>}/>
-                    <Route path="/signup" element={<SignupPage/>}/>
+                    <Route path="/signup" element={<SignupForm/>}/>
                     <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
                     <Route path="/reset-password" element={<ResetPasswordPage/>}/>
                     <Route path="/termos" element={<TermsOfServicePage/>}/>
