@@ -15,6 +15,20 @@ export const ResultPage = () => {
 
     const [user, setUser] = useState<IUserGet>();
 
+    const formatTelephone = (value: string) => {
+        const digits = value.replace(/\D/g, "").slice(0, 11);
+
+        if (digits.length <= 2) {
+            return `(${digits.padEnd(2, "_")}) _____-____`;
+        } else if (digits.length <= 3) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2)}${"_".repeat(4 - digits.slice(2).length)}-____`;
+        } else if (digits.length <= 7) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)}${digits.slice(3).padEnd(4, "_")}-____`;
+        } else {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)}${digits.slice(3, 7)}-${digits.slice(7).padEnd(4, "_")}`;
+        }
+    };
+
     const load = async () => {
         setUser(await UserService.get(jwtDecode<{id: string}>(authCtx.token).id));
     }
@@ -49,7 +63,7 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godparent.name}</p>
                                 <p><b>Email:</b> {relation.godparent.email}</p>
                                 <p><b>Veio de:</b> {relation.godparent.city}</p>
-                                {relation.godparent.telephone && <p><b>Telefone:</b> {relation.godparent.telephone}</p>}
+                                {relation.godparent.telephone && <p><b>Telefone:</b> {formatTelephone(relation.godparent.telephone)}</p>}
                                 {relation.godparent.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godparent.yearOfEntry}</p>}
                             </div>
                         </div>
@@ -98,7 +112,7 @@ export const ResultPage = () => {
                                 <p><b>Nome:</b> {relation.godchild.name}</p>
                                 <p><b>Email:</b> {relation.godchild.email}</p>
                                 <p><b>Veio de:</b> {relation.godchild.city}</p>
-                                {relation.godchild.telephone && <p><b>Telefone:</b> {relation.godchild.telephone}</p>}
+                                {relation.godchild.telephone && <p><b>Telefone:</b> {formatTelephone(relation.godchild.telephone)}</p>}
                                 {relation.godchild.yearOfEntry && <p><b>Ano de Ingresso:</b> {relation.godchild.yearOfEntry}</p>}
                             </div>
                         </div>
